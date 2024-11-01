@@ -1,4 +1,47 @@
 import requests  
+import bs4 
+
+loginURL = "https://sparkdigi.ir/ghiasi1346/index.php?rand=1730044944006" 
+login_payload = {
+    'email': '***REMOVED***',  
+    # 'password': '***REMOVED***' 
+    'passwd': '***REMOVED***' ,
+    # wrong:
+    # 'password': '***REMOVED***e' 
+    'redirect': 'AdminDashboard',        
+    'stay_logged_in': '1'                
+}
+# headers = {
+#     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+# }
+
+Session = requests.session()
+
+from requests.exceptions import HTTPError
+try:
+    response = Session.post(loginURL , data=login_payload , timeout=3)
+    response.raise_for_status()
+except HTTPError as err:
+    print(f'HTTP error occurred: {err}')  
+except Exception as err:
+    print(f'Other error occurred: {err}') 
+else:
+    print('Success! no expection')
+    print(response.url)
+
+if response.ok:
+    print('Success! between 200 , 400 ')
+else:
+    print('An error has occurred.  404 or something')
+
+
+with  open("res.html" , "wb" ,) as file  :
+    file.write(response.content)
+
+
+Session.close()
+
+import requests  
 from requests.exceptions import HTTPError
 from bs4 import BeautifulSoup
 from pathlib import Path
