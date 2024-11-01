@@ -1,41 +1,43 @@
+# this is the video
+# https://www.youtube.com/watch?v=cVnYod9Fhko  
 import requests  
 import bs4 
+loginURL = "https://sparkdigi.ir/ghiasi1346/" 
 
-loginURL = "https://sparkdigi.ir/ghiasi1346/index.php?rand=1730044944006" 
-login_payload = {
-    'email': '***REMOVED***',  
-    # 'password': '***REMOVED***' 
-    'passwd': '***REMOVED***' ,
-    # wrong:
-    # 'password': '***REMOVED***e' 
-    'redirect': 'AdminDashboard',        
-    'stay_logged_in': '1'                
+cookies = {
+    'PHPSESSID': '9bb21ef892d87ccb7b0af6a943a72013',
+    'PrestaShop-e90252a8fd4a0ca7e71edaf85ba3041a': 'def502009874c51dd8ab64ccee319621e24bb6664c6e0527aa636ab16add42b4f93d51d873c1d9d5dcb9377912b750c47ff17c1c8a1f228f80bab546b62babdc6d206d624f70d0cf02c59fa5b243d239494ac42950bce46ce7d91897dc43077628957d3ed4da462217f484b6dc7c56cf09a57de9c35d6f98374713702514cee09bfbc4e3ad7bb09c4544012938a01d9d1a2cbc62be13704142f16fa33049405b7697e6a0171c9de9fc845d637d1d7d9eb725d43c221623be1d622a6212da7d9f9fa39221384e331c978c06b3fd7932083288c6fd11b1695efa744beccae538cc9ba5ce6f88cbaa841a9b004155e442e0561729921a94c7890d1fa1ba77605750b4495279fc620b117ca66540f12b36a6b56c5c2401f4d92b328d069acc8cc4274713447bc8f68533db1fb8540e66a66813dc5bcff47688c38c3f25cc753b9c9389ba8c8e052bdea970519e9b5c6bdc1ecde76a910b4537c2ba569f70b67c273b398fef3aedd4d958094fe4f4351933cda0a9410e51638f5db3cfb3c6953b301da462e5caf8d5f6b240fade93605cd87c4bd9de2e21172e322da12ffa34cee0fe866fc17ba749208c55b2263d55fd28ef53c56532522ba50eb35044fc5bbd8ee1f5b3df08285f1b38616c46fb1af745633b97fc9e00475485ad94d1c7a42a749c',
 }
-# headers = {
-#     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
-# }
 
-Session = requests.session()
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    # 'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'Referer': 'https://sparkdigi.ir/ghiasi1346/index.php?controller=AdminLogin&token=0e72963fadcbe61a80322e2a4da8ef99&redirect=AdminDashboard',
+    'Alt-Used': 'sparkdigi.ir',
+    'Connection': 'keep-alive',
+    # 'Cookie': 'PHPSESSID=9bb21ef892d87ccb7b0af6a943a72013; PrestaShop-e90252a8fd4a0ca7e71edaf85ba3041a=def502009874c51dd8ab64ccee319621e24bb6664c6e0527aa636ab16add42b4f93d51d873c1d9d5dcb9377912b750c47ff17c1c8a1f228f80bab546b62babdc6d206d624f70d0cf02c59fa5b243d239494ac42950bce46ce7d91897dc43077628957d3ed4da462217f484b6dc7c56cf09a57de9c35d6f98374713702514cee09bfbc4e3ad7bb09c4544012938a01d9d1a2cbc62be13704142f16fa33049405b7697e6a0171c9de9fc845d637d1d7d9eb725d43c221623be1d622a6212da7d9f9fa39221384e331c978c06b3fd7932083288c6fd11b1695efa744beccae538cc9ba5ce6f88cbaa841a9b004155e442e0561729921a94c7890d1fa1ba77605750b4495279fc620b117ca66540f12b36a6b56c5c2401f4d92b328d069acc8cc4274713447bc8f68533db1fb8540e66a66813dc5bcff47688c38c3f25cc753b9c9389ba8c8e052bdea970519e9b5c6bdc1ecde76a910b4537c2ba569f70b67c273b398fef3aedd4d958094fe4f4351933cda0a9410e51638f5db3cfb3c6953b301da462e5caf8d5f6b240fade93605cd87c4bd9de2e21172e322da12ffa34cee0fe866fc17ba749208c55b2263d55fd28ef53c56532522ba50eb35044fc5bbd8ee1f5b3df08285f1b38616c46fb1af745633b97fc9e00475485ad94d1c7a42a749c',
+    'Upgrade-Insecure-Requests': '1',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Priority': 'u=4',
+    # Requests doesn't support trailers
+    # 'TE': 'trailers',
+}
 
-from requests.exceptions import HTTPError
-try:
-    response = Session.post(loginURL , data=login_payload , timeout=3)
-    response.raise_for_status()
-except HTTPError as err:
-    print(f'HTTP error occurred: {err}')  
-except Exception as err:
-    print(f'Other error occurred: {err}') 
-else:
-    print('Success! no expection')
-    print(response.url)
+params = {
+    'controller': 'AdminDashboard',
+    'token': 'cea43f91ec489307cb4cfcfe634d5dd6',
+}
 
-if response.ok:
-    print('Success! between 200 , 400 ')
-else:
-    print('An error has occurred.  404 or something')
 
+
+response = requests.get('https://sparkdigi.ir/ghiasi1346/index.php', params=params, cookies=cookies, headers=headers)
 
 with  open("res.html" , "wb" ,) as file  :
+<<<<<<< HEAD
     file.write(response.content)
 
 
@@ -374,3 +376,6 @@ main()
 
 
 # soal : aya kharid hozori ha ro ham factor konam ????
+=======
+    file.write(response.content)
+>>>>>>> b6c132c (video Way succesed)
