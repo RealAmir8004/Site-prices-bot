@@ -1,5 +1,6 @@
 import requests  
-import bs4 
+from requests.exceptions import HTTPError
+from bs4 import BeautifulSoup
 from pathlib import Path
 
 
@@ -15,16 +16,15 @@ for line in lines :
 with open("cookiesFile.py" , "w") as cookiesFile: 
     cookiesFile.write(strCode)
 
-import cookiesFile
+from  cookiesFile import params 
+from  cookiesFile import headers 
+from  cookiesFile import cookies 
 
 
-
-# https://sparkdigi.ir/ghiasi1346/index.php/sell/catalog/products?_token=9k52YLOtvPOGGL31rj_l-WrzzC403GC0ZzYGVvvOzdk
 loginURL = "https://sparkdigi.ir/ghiasi1346/" 
 product1 = "https://sparkdigi.ir/ghiasi1346/index.php/sell/catalog/products/0/100/id_product/asc?controller_type=2&controller_name=PrestaShopBundle%5CController%5CAdmin%5CProductController&_route=0&_token=9k52YLOtvPOGGL31rj_l-WrzzC403GC0ZzYGVvvOzdk"
 product2 = "https://sparkdigi.ir/ghiasi1346/index.php/sell/catalog/products/100/100/id_product/asc?controller_type=2&controller_name=PrestaShopBundle%5CController%5CAdmin%5CProductController&_route=0&_token=9k52YLOtvPOGGL31rj_l-WrzzC403GC0ZzYGVvvOzdk"
 
-from requests.exceptions import HTTPError
 try:
     response = requests.get(loginURL, params=params, cookies=cookies, headers=headers)
     response.raise_for_status()
@@ -36,10 +36,6 @@ else:
     print('Success! no expection')
     print(response.url)
 
-if response.ok:
-    print('Success! between 200 , 400 ')
-else:
-    print('An error has occurred.  404 or something')
 
     
 with  open("res.html" , "wb" ,) as file  :
