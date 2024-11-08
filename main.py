@@ -2,11 +2,29 @@ import requests
 from requests.exceptions import HTTPError
 from bs4 import BeautifulSoup
 from pathlib import Path
+import os  
+
+if os.path.exists("LOGINtest.html"):  
+    os.remove("LOGINtest.html")  
+
+if os.path.exists("P1.html"):  
+    os.remove("P1.html")  
+
+if os.path.exists("P1-reached-or-not.html"):  
+    os.remove("P1-reached-or-not.html")  
+
+try:
+    with  open("input-here.txt", "r") as txtfile :
+        lines = txtfile.readlines()
+except FileNotFoundError as err :
+    print(err)
+    os.makedirs("input-here.txt")  
+    quit()
+except PermissionError as err : 
+    print(f'looks like txt is empty: \n {err}')  
+    quit()
 
 
-with  open("input-here.txt", "r") as txtfile :
-    lines = txtfile.readlines()
-    
 strCode = ""
 for line in lines :
     if "import"in line  or  "requests." in line :
@@ -16,28 +34,31 @@ for line in lines :
 with open("cookiesFile.py" , "w") as cookiesFile: 
     cookiesFile.write(strCode)
 
-from  cookiesFile import params 
-from  cookiesFile import headers 
-from  cookiesFile import cookies 
+from  cookiesFile import params  # type: ignore
+from  cookiesFile import headers # type: ignore
+from  cookiesFile import cookies # type: ignore
 
 
+baseURL = "https://sparkdigi.ir" 
 loginURL = "https://sparkdigi.ir/ghiasi1346/" 
 product1 = "https://sparkdigi.ir/ghiasi1346/index.php/sell/catalog/products/0/100/id_product/asc?controller_type=2&controller_name=PrestaShopBundle%5CController%5CAdmin%5CProductController&_route=0&_token=9k52YLOtvPOGGL31rj_l-WrzzC403GC0ZzYGVvvOzdk"
+product1 = "https://sparkdigi.ir/ghiasi1346/index.php/sell/catalog/products/0/100/id_product/asc?_token=3hKEEjh_UltL4qXmOlXd2a9cs1WiBQ0N2J6_5GHWLg0"
+
 product2 = "https://sparkdigi.ir/ghiasi1346/index.php/sell/catalog/products/100/100/id_product/asc?controller_type=2&controller_name=PrestaShopBundle%5CController%5CAdmin%5CProductController&_route=0&_token=9k52YLOtvPOGGL31rj_l-WrzzC403GC0ZzYGVvvOzdk"
 
+Session = requests.session()
 try:
-    response = requests.get(loginURL, params=params, cookies=cookies, headers=headers)
+    response = Session.post(loginURL, params=params, cookies=cookies, headers=headers , allow_redirects=False ) #can be get/post ?!
     response.raise_for_status()
 except HTTPError as err:
     print(f'HTTP error occurred: {err}')  
 except Exception as err:
     print(f'Other error occurred: {err}') 
 else:
-    print('Success! no expection')
-    print(response.url)
-
-
+    print('Success! no expection') #print1
+    print(response.url) #print2
     
+<<<<<<< HEAD
 with  open("res.html" , "wb" ,) as file  :
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -383,11 +404,43 @@ main()
     file.write(response.content)
 >>>>>>> b6c132c (video Way succesed)
 =======
+=======
+soup = BeautifulSoup(response.text , "html.parser")    
+founded = soup.find("body" , class_="lang-fa lang-rtl ps_back-office page-topbar admindashboard")
+if not founded :
+    print("*login failed* : redirected to login page")
+    quit()
+
+with  open("LOGINtest.html" , "wb" ,) as file  :
+>>>>>>> d2f93ac (reached P1)
     file.write(response.content)
 
 
-# response = requests.get(product1, params=params, cookies=cookies, headers=headers)   
+response = Session.get(product1 )   
+print(response.url) #print3
 
+<<<<<<< HEAD
 # with  open("res.html" , "wb" ,) as file  :
 #     file.write(response.content)
 >>>>>>> 4a8cd26 ("auto import cookis/params " added)
+=======
+soup = BeautifulSoup(response.text , "html.parser")    
+founded = soup.find(id="security-compromised-page")
+
+with  open("P1-reached-or-not.html" , "wb" ,) as file  :
+    file.write(response.content)
+
+if founded :
+    p1U= founded.find("a")
+    print("attrs: " ,p1U.attrs) #JUST FOR TEST
+    P1Href = p1U['href']
+    
+    response = Session.get(baseURL+P1Href)
+    print(response.url)
+    with  open("P1.html" , "wb" ,) as file  :
+        file.write(response.content)
+
+else:
+    print("nothing founded")
+    
+>>>>>>> d2f93ac (reached P1)
