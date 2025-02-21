@@ -102,8 +102,73 @@ def get_data_from_csv() -> list[Data]:
 #  اینکه محصولات فعال در سی اس وی = false
 
 
+def scrap_data (data : list[Data]):
+    
+    # fix me : removed for (tst) 
+    # for d in data:
+    #     if d.active and d.number>0 : 
 
+    d = data[8] #tst
+    d.active = True # fix me : after fixing (ایرادات)
+    print("searching google for ", d.id, ":")
 
+    search_url = f"https://www.google.com/search?q={d.name}&num=10" # 10 = number of sites
+
+    def get_html(url : str ) -> requests.Response:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
+        try:
+            response = requests.get(url=url , headers=headers)
+            response.raise_for_status()
+        except HTTPError as err:
+            print(f'HTTP error occurred: {err}')  
+        except Exception as err:
+            print(f'Other error occurred: {err}') 
+        else:
+            print('Success! no expection with url : ' ,response.url) 
+            return response
+
+    
+    def find_torob_Link (response : requests.Response):
+        links = []
+        soup = BeautifulSoup(response.text , "html.parser")    
+
+        with  open("soupPrettify.html" , "w" ,) as file  : # tst*
+            file.write(soup.prettify())
+        
+        for g in soup.find_all('div', class_='tF2Cxc'):  # tF2Cxc = results class
+            link = g.find('a')['href']
+            if 'torob' in link :
+                return link 
+            
+        return False
+    
+
+    print("searching google :")
+    response = get_html(search_url) # tst*   
+
+    with  open("searchResult.html" , "wb" ,) as file  : # tst*
+        file.write(response.content)
+
+    # find_torob_Link(get_html())      #  in khat bayad bshe bjaye in ( # tst* ) haye bala
+
+    torobLink=find_torob_Link(response)
+    if (torobLink==False) :
+        print("torob url not founded ")
+        quit()
+
+    print("torob url founded : ", torobLink)
+
+    # fix me : declare a function ? 
+
+    print("searching torob :")
+    response = get_html(torobLink) # fix me : response is overwrited (is it neccecery to change the name of the variable? )
+
+    with  open("TorobResult.html" , "wb" ,) as file  :
+        file.write(response.content)
+    
+    
 # main.py :
-get_data_from_csv()
+
+data = get_data_from_csv()
+scrap_data(data)
 
