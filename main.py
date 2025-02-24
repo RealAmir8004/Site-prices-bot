@@ -103,16 +103,32 @@ def get_data_from_csv() -> list[Data]:
 
 
 def scrap_data (data : list[Data]):
-    
     # fix me : removed for (tst) 
+    # age khasti "for" ro ezafe koni "def func" ha ro biyar biron !!!!!!!!!!!!!!! 
     # for d in data:
     #     if d.active and d.number>0 : 
 
     d = data[8] #tst
     d.active = True # fix me : after fixing (ایرادات)
-    print("searching google for ", d.id, ":")
-
-    search_url = f"https://www.google.com/search?q={d.name}&num=10" # 10 = number of sites
+# "بلندگو پایونیر Pioneer TS-G1020F - اصلی"G
+    
+    def search_google (d : Data):
+        print("searching google for ", d.id, ":")
+        from googlesearch import search
+        import re
+        query = d.name
+        num_results = 10
+        targets = []
+        target_pattern = r"https://torob.com/"
+        with open("searchResult_ME.txt","w") as file:
+            for result in search(query , num_results):
+                file.write(f"\n{result}\n")
+                if re.match(target_pattern,result):
+                    targets.append( result)
+        
+        print("prinring all search results (first url will be used) :")
+        print(targets)
+        return targets
 
     def get_html(url : str ) -> requests.Response:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
@@ -126,47 +142,57 @@ def scrap_data (data : list[Data]):
         else:
             print('Success! no expection with url : ' ,response.url) 
             return response
-
     
-    def find_torob_Link (response : requests.Response):
-        links = []
-        soup = BeautifulSoup(response.text , "html.parser")    
-
-        with  open("soupPrettify.html" , "w" ,) as file  : # tst*
-            file.write(soup.prettify())
+    def calc_price (torob_response : requests.Response):
+        from bs4.element import Tag        
         
-        for g in soup.find_all('div', class_='tF2Cxc'):  # tF2Cxc = results class
-            link = g.find('a')['href']
-            if 'torob' in link :
-                return link 
-            
-        return False
+        soup = BeautifulSoup(torob_response.text , "html.parser")    
+        
+        buy_box : Tag= soup.find('div', class_='Showcase_buy_box__q4cpD') # class = Showcase_buy_box__q4cpD # badge =.Showcase_guarantee_badge_text__Kz3AW
+
+
+        result : list[Tag] = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  #result[0] = site_name   result[1] = site_price 
+        if "اسپارک" in result[0].get_text(strip=True):
+            return False
+
+        price_txt = result[1].get_text(strip=True)
+        price = int(''.join(filter(str.isdigit, price_txt)))
+        print(f"buy box = {price}", end=" ")
+
+
+        if buy_box.find('div' , class_="Showcase_buy_box_badge__Tc_1w Showcase_guarantee_badge__U90n2") is None : # ckeck if guarantee_badge 
+            print("is Not badged", end=" ")
+            new_price = (price *105 ) / 100 
+            mod = new_price % 10_000
+            print (f" (tst : price={price} <> mod={mod} ) " , end="")
+            if mod >= 9000 or price<200_000  :
+                return new_price
+            else:
+                return  new_price - (mod + 1000)  
+        
+        else : # is badged 
+            print("issss  badged", end=" ")
+            mod = price % 10_000
+            return  price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
     
 
-    print("searching google :")
-    response = get_html(search_url) # tst*   
 
-    with  open("searchResult.html" , "wb" ,) as file  : # tst*
-        file.write(response.content)
-
-    # find_torob_Link(get_html())      #  in khat bayad bshe bjaye in ( # tst* ) haye bala
-
-    torobLink=find_torob_Link(response)
-    if (torobLink==False) :
-        print("torob url not founded ")
-        quit()
-
-    print("torob url founded : ", torobLink)
-
-    # fix me : declare a function ? 
-
+    results = search_google(d)
     print("searching torob :")
-    response = get_html(torobLink) # fix me : response is overwrited (is it neccecery to change the name of the variable? )
+    response = get_html(results[0]) # targets[0] = first torob result(url)
 
-    with  open("TorobResult.html" , "wb" ,) as file  :
+    with  open("TorobResult3.html" , "wb" ,) as file  : #tst
         file.write(response.content)
-    
-    
+
+    new_price = calc_price(response)
+    if new_price == False : # fix me (for tst ) : bayad "continue" kone bjaye "return" -> for loop
+        print("buy box was already spark")
+        return 
+    else:
+        print(f"Converted to :{new_price}")
+        return new_price
+
+
 # main.py :
 
 data = get_data_from_csv()
