@@ -33,12 +33,6 @@ def get_data_from_csv() -> list[Data]:
     files = list(csvFolder.glob("*.csv"))
     if files:
         csv_file_path = files[0]
-        print(f"successful Opening file: {csv_file_path}")
-    else:
-        print("No CSV files found in the directory.")
-        quit()
-
-
 
 
     data = []
@@ -143,13 +137,12 @@ def scrap_data (data : list[Data]):
             print('Success! no expection with url : ' ,response.url) 
             return response
     
-    def calc_price (torob_response : requests.Response):
+
+
+    def calc_price (soup : BeautifulSoup): 
         from bs4.element import Tag        
         
-        soup = BeautifulSoup(torob_response.text , "html.parser")    
-        
         buy_box : Tag= soup.find('div', class_='Showcase_buy_box__q4cpD') # class = Showcase_buy_box__q4cpD # badge =.Showcase_guarantee_badge_text__Kz3AW
-
 
         result : list[Tag] = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  #result[0] = site_name   result[1] = site_price 
         if "اسپارک" in result[0].get_text(strip=True):
@@ -181,10 +174,13 @@ def scrap_data (data : list[Data]):
     print("searching torob :")
     response = get_html(results[0]) # targets[0] = first torob result(url)
 
-    with  open("TorobResult3.html" , "wb" ,) as file  : #tst
-        file.write(response.content)
+    soup = BeautifulSoup(response.content , "html5lib")    
+    
+    with  open("TorobResult3.html" , "w" , encoding='utf-8') as file  : #tst
+        file.write(soup.prettify())
 
-    new_price = calc_price(response)
+    new_price = calc_price(soup)
+    
     if new_price == False : # fix me (for tst ) : bayad "continue" kone bjaye "return" -> for loop
         print("buy box was already spark")
         return 
