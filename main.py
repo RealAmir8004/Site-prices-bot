@@ -103,6 +103,8 @@ def scrap_data (data : list[Data]):
     #     if d.active and d.number>0 : 
 
     d = data[8] #tst
+    d = data[13] #tst
+    d = data[22] #tst
     d.active = True # fix me : after fixing (ایرادات)
 # "بلندگو پایونیر Pioneer TS-G1020F - اصلی"G
     
@@ -138,12 +140,45 @@ def scrap_data (data : list[Data]):
             return response
     
 
+    class Site :
+        def __init__(self , shop_name  ,  warranty_badged  , price , last_price_change ):
+            self.name = shop_name
+            self.badged = warranty_badged
+            self.price = price 
+            self.last_change = last_price_change
+
+
+    import json # tst 
+    from json import loads
+    def get_all_sites (soup : BeautifulSoup) -> list[Site] :
+
+        script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
+        
+        json_data = loads(script_tag.string)  
+
+        with open("test_data.json", "w", encoding="utf-8") as j: #tst
+            json.dump(json_data, j, ensure_ascii=False, indent=4)
+        
+        products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
+
+        sites: list[Site] = []
+        with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
+            for product in products:
+                if product['availability'] :
+                    sites.append(Site(product['shop_name'] , product['is_filtered_by_warranty']  , product['price_text'] , product['last_price_change_date']))
+                    f.write(f"------{product['shop_name']} ----------- {product['price_text']}  \n") # tst
+                else :
+                    f.write(f"{product['shop_name'] } ----------- {product['price_text']} \n") # tst
+        return sites
+
 
     def calc_price (soup : BeautifulSoup): 
         from bs4.element import Tag        
         
         buy_box : Tag= soup.find('div', class_='Showcase_buy_box__q4cpD') # class = Showcase_buy_box__q4cpD # badge =.Showcase_guarantee_badge_text__Kz3AW
-
+        
+        get_all_sites(soup)
+        
         result : list[Tag] = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  #result[0] = site_name   result[1] = site_price 
         if "اسپارک" in result[0].get_text(strip=True):
             return False
@@ -194,3 +229,16 @@ def scrap_data (data : list[Data]):
 data = get_data_from_csv()
 scrap_data(data)
 
+
+# printed result :
+# suggestion : (if spark is first => start from row 2 ---> kolan spark ro har ja bod skip kon )
+# 1- 1465156 calced with first site 
+# 2- 155416 calced with second site 
+# ...    
+# sites :
+# 31561
+# 6541651 = spark 
+# 524516 = (red = warranty)
+# 54546
+# 5466666654 = (red = warranty) 
+# 58464
