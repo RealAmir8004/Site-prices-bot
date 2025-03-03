@@ -167,29 +167,25 @@ def scrap_data (data : list[Data]):
         products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
 
         badged_sites = []
+        unbadged_sites = []
         sites = []
         # badged_sites: list[Site] = [] # (info@)
         # sites: list[Site] = []  # (info@)
         with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
 
-            first_product = True 
             for product in products:
-
-                if first_product : # adedd for removing product['is_adv'] :: ['is_adv'] can just be the first elememt 
-                    first_product = False
-                    if product['is_adv']:
-                        continue
-
-                if product['availability'] :
+                if product['availability'] and product['is_adv'] == False :
                     if product['is_filtered_by_warranty'] :
                         badged_sites.append(Site(product['shop_name']  , product['price_text']))
-                                            
+                    else:
+                        unbadged_sites.append(Site(product['shop_name']  , product['price_text']))
+
                     sites.append(Site(product['shop_name']  , product['price_text']))
 
                     f.write(f"------{product['shop_name']} ----------- {product['price_text']}  \n") # tst
                 else :
                     f.write(f"{product['shop_name'] } ----------- {product['price_text']} \n") # tst
-        return badged_sites , sites 
+        return badged_sites , unbadged_sites, sites 
 
 
     def calc_price (soup : BeautifulSoup): 
@@ -199,39 +195,37 @@ def scrap_data (data : list[Data]):
         # code : age buy_box bdard nemikhord
         #   buy_box = olaviat ydone  badish jaygozin she 
 
-        badged_sites , sites  = get_all_sites(soup) # sites  = all sites
+        badged_sites , unbadged_sites ,  sites  = get_all_sites(soup) # sites  = all sites 
         
         box_name , box_price = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  
-        if "اسپارک" in box_name.get_text(strip=True):
-            return False
-
-        price_txt = box_price.get_text(strip=True)
-        price = int(''.join(filter(str.isdigit, price_txt)))
-        print(f"buy box = {price}", end=" ")
-
-        with  open("tst.txt" , "w" , encoding='utf-8') as file  : #tst
-            file.write("badges site:\n")
-            for b in badged_sites:
-                file.write(b.name)
-            file.write("box_name.get_text(strip=True):\n")
-            file.write(box_name.get_text(strip=True)[8:])
-
-        if box_name.get_text(strip=True)[8:] in [site.name for site in badged_sites]: # ckeck if guarantee_badge !!!!!!!!! mohem : in behtarin halate  bekhate algoritm buy_box torob
-            print("issss  badged", end=" ")
-            mod = price % 10_000
-            if mod <= 4000: # baraye inke age masalan ::  mod==0  bod price faghat 1000 ta kam nashe (zaye mishe)
-                mod += (4000-mod)
-            return  price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
+        box = Site( box_name.get_text(strip=True)[8:] ,  int(''.join(filter(str.isdigit, box_price.get_text(strip=True)))) ) # ye object 'Site' az 'buy_box' misaze
+        print(f"buy box = {box.price}", end=" ") #tst
         
-        else : # is NOT badged 
-            print("is Not badged", end=" ")
-            new_price = (price *105 ) / 100 
-            mod = new_price % 10_000
-            print (f" (tst : price={price} <> mod={mod} ) " , end="")
-            if mod >= 9000 or price<200_000  :
-                return new_price
-            else:
-                return  new_price - (mod + 1000)  
+        if "اسپارک" in box_name.get_text(strip=True): # need fix in new version : if ... and (buy_box.price == uncorrect )
+            pass
+            print(f"---> changed to : {box.price}", end=" ") #tst
+        
+
+        def calc_prices_pr (box : Site , badged_sites : list) :
+            if box.name in [site.name for site in badged_sites]: # ckeck if guarantee_badge !!!!!!!!! mohem : in behtarin halate  bekhate algoritm buy_box torob
+                print("issss  badged", end=" ")
+                mod = box.price % 10_000
+                if mod <= 4000: # baraye inke age masalan ::  mod==0  bod price faghat 1000 ta kam nashe (zaye mishe)
+                    mod += (4000-mod)
+                return   box.price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
+            
+            else : # is NOT badged 
+                print("is Not badged", end=" ")
+                new_price = ( box.price *105 ) / 100 
+                mod = new_price % 10_000
+                print (f" (tst : price={ box.price} <> mod={mod} ) " , end="")
+                if mod >= 9000 or  box.price<200_000  :
+                    return new_price
+                else:
+                    return  new_price - (mod + 1000)  
+                
+        
+        return calc_prices_pr(box , badged_sites)
     
 
 
