@@ -102,9 +102,11 @@ def scrap_data (data : list[Data]):
     # for d in data:
     #     if d.active and d.number>0 : 
 
-    d = data[8] #tst
-    d = data[13] #tst
+    d = data[22] #tst 
     d = data[22] #tst
+    d = data[23] #tst
+    d = data[8] #tst  id =18
+    d = data[13] #tst
     d.active = True # fix me : after fixing (ایرادات)
 # "بلندگو پایونیر Pioneer TS-G1020F - اصلی"G
     
@@ -141,16 +143,19 @@ def scrap_data (data : list[Data]):
     
 
     class Site :
-        def __init__(self , shop_name  ,  warranty_badged  , price , last_price_change ):
+        def __init__(self , shop_name  , price ):
             self.name = shop_name
-            self.badged = warranty_badged
             self.price = price 
-            self.last_change = last_price_change
-
-
+        def __lt__(self, other):  # Define sorting rule (lower grade first)
+            return self.price < other.price
+        
+    # (info@) : rah haye mokhtalefi baraye sort bodan  list ha hast 
+        # 1 - if : product['is_adv']  delete konim -> list ha khodeshon sort shode mian biron (vali ye data hazf mishe) 
+        # 2 - sortedList
+    from sortedcontainers import SortedList
     import json # tst 
     from json import loads
-    def get_all_sites (soup : BeautifulSoup) -> list[Site] :
+    def get_all_sites (soup : BeautifulSoup) :
 
         script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
         
@@ -161,34 +166,64 @@ def scrap_data (data : list[Data]):
         
         products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
 
-        sites: list[Site] = []
+        badged_sites = []
+        sites = []
+        # badged_sites: list[Site] = [] # (info@)
+        # sites: list[Site] = []  # (info@)
         with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
+
+            first_product = True 
             for product in products:
+
+                if first_product : # adedd for removing product['is_adv'] :: ['is_adv'] can just be the first elememt 
+                    first_product = False
+                    if product['is_adv']:
+                        continue
+
                 if product['availability'] :
-                    sites.append(Site(product['shop_name'] , product['is_filtered_by_warranty']  , product['price_text'] , product['last_price_change_date']))
+                    if product['is_filtered_by_warranty'] :
+                        badged_sites.append(Site(product['shop_name']  , product['price_text']))
+                                            
+                    sites.append(Site(product['shop_name']  , product['price_text']))
+
                     f.write(f"------{product['shop_name']} ----------- {product['price_text']}  \n") # tst
                 else :
                     f.write(f"{product['shop_name'] } ----------- {product['price_text']} \n") # tst
-        return sites
+        return badged_sites , sites 
 
 
     def calc_price (soup : BeautifulSoup): 
         from bs4.element import Tag        
         
         buy_box : Tag= soup.find('div', class_='Showcase_buy_box__q4cpD') # class = Showcase_buy_box__q4cpD # badge =.Showcase_guarantee_badge_text__Kz3AW
+        # code : age buy_box bdard nemikhord
+        #   buy_box = olaviat ydone  badish jaygozin she 
+
+        badged_sites , sites  = get_all_sites(soup) # sites  = all sites
         
-        get_all_sites(soup)
-        
-        result : list[Tag] = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  #result[0] = site_name   result[1] = site_price 
-        if "اسپارک" in result[0].get_text(strip=True):
+        box_name , box_price = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  
+        if "اسپارک" in box_name.get_text(strip=True):
             return False
 
-        price_txt = result[1].get_text(strip=True)
+        price_txt = box_price.get_text(strip=True)
         price = int(''.join(filter(str.isdigit, price_txt)))
         print(f"buy box = {price}", end=" ")
 
+        with  open("tst.txt" , "w" , encoding='utf-8') as file  : #tst
+            file.write("badges site:\n")
+            for b in badged_sites:
+                file.write(b.name)
+            file.write("box_name.get_text(strip=True):\n")
+            file.write(box_name.get_text(strip=True)[8:])
 
-        if buy_box.find('div' , class_="Showcase_buy_box_badge__Tc_1w Showcase_guarantee_badge__U90n2") is None : # ckeck if guarantee_badge 
+        if box_name.get_text(strip=True)[8:] in [site.name for site in badged_sites]: # ckeck if guarantee_badge !!!!!!!!! mohem : in behtarin halate  bekhate algoritm buy_box torob
+            print("issss  badged", end=" ")
+            mod = price % 10_000
+            if mod <= 4000: # baraye inke age masalan ::  mod==0  bod price faghat 1000 ta kam nashe (zaye mishe)
+                mod += (4000-mod)
+            return  price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
+        
+        else : # is NOT badged 
             print("is Not badged", end=" ")
             new_price = (price *105 ) / 100 
             mod = new_price % 10_000
@@ -197,11 +232,6 @@ def scrap_data (data : list[Data]):
                 return new_price
             else:
                 return  new_price - (mod + 1000)  
-        
-        else : # is badged 
-            print("issss  badged", end=" ")
-            mod = price % 10_000
-            return  price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
     
 
 
