@@ -103,10 +103,9 @@ def scrap_data (data : list[Data]):
     #     if d.active and d.number>0 : 
 
     d = data[22] #tst 
-    d = data[22] #tst
+    d = data[13] #tst
     d = data[23] #tst
     d = data[8] #tst  id =18
-    d = data[13] #tst
     d.active = True # fix me : after fixing (ایرادات)
 # "بلندگو پایونیر Pioneer TS-G1020F - اصلی"G
     
@@ -143,7 +142,7 @@ def scrap_data (data : list[Data]):
     
 
     class Site :
-        def __init__(self , shop_name  , price ):
+        def __init__(self , shop_name  , price : int):
             self.name = shop_name
             self.price = price 
         def __lt__(self, other):  # Define sorting rule (lower grade first)
@@ -155,7 +154,7 @@ def scrap_data (data : list[Data]):
     from sortedcontainers import SortedList
     import json # tst 
     from json import loads
-    def get_all_sites (soup : BeautifulSoup) :
+    def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site]]: 
 
         script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
         
@@ -166,21 +165,23 @@ def scrap_data (data : list[Data]):
         
         products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
 
+        # (info@) 
         badged_sites = []
         unbadged_sites = []
         sites = []
-        # badged_sites: list[Site] = [] # (info@)
-        # sites: list[Site] = []  # (info@)
         with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
 
             for product in products:
-                if product['availability'] and product['is_adv'] == False :
+                if "اسپارک" in product['shop_name'] : 
+                    f.write(f"sparkkkk : {product['shop_name'] } ----------- {product['price_text']} \n") # tst
+                
+                elif product['availability'] and product['is_adv'] == False :
                     if product['is_filtered_by_warranty'] :
-                        badged_sites.append(Site(product['shop_name']  , product['price_text']))
+                        badged_sites.append(Site(product['shop_name']  , int(''.join(filter(str.isdigit, product['price_text']))) ))  
                     else:
-                        unbadged_sites.append(Site(product['shop_name']  , product['price_text']))
+                        unbadged_sites.append(Site(product['shop_name']  , int(''.join(filter(str.isdigit, product['price_text']))) ))
 
-                    sites.append(Site(product['shop_name']  , product['price_text']))
+                    sites.append(Site(product['shop_name']  , int(''.join(filter(str.isdigit, product['price_text']))) ))
 
                     f.write(f"------{product['shop_name']} ----------- {product['price_text']}  \n") # tst
                 else :
@@ -201,8 +202,15 @@ def scrap_data (data : list[Data]):
         box = Site( box_name.get_text(strip=True)[8:] ,  int(''.join(filter(str.isdigit, box_price.get_text(strip=True)))) ) # ye object 'Site' az 'buy_box' misaze
         print(f"buy box = {box.price}", end=" ") #tst
         
-        if "اسپارک" in box_name.get_text(strip=True): # need fix in new version : if ... and (buy_box.price == uncorrect )
-            pass
+        if "اسپارک" in box.name: # need fix in new version : if ... and (buy_box.price == uncorrect ) 
+            
+            if not badged_sites:
+                box = unbadged_sites[0] # fix = code repetaion
+
+            elif badged_sites[0].price < (unbadged_sites[0].price * 105)/100 :
+                box = badged_sites[0]
+            else :
+                box = unbadged_sites[0] 
             print(f"---> changed to : {box.price}", end=" ") #tst
         
 
@@ -216,7 +224,7 @@ def scrap_data (data : list[Data]):
             
             else : # is NOT badged 
                 print("is Not badged", end=" ")
-                new_price = ( box.price *105 ) / 100 
+                new_price = ( box.price *105 ) / 100 - 1000 
                 mod = new_price % 10_000
                 print (f" (tst : price={ box.price} <> mod={mod} ) " , end="")
                 if mod >= 9000 or  box.price<200_000  :
@@ -266,3 +274,6 @@ scrap_data(data)
 # 54546
 # 5466666654 = (red = warranty) 
 # 58464
+
+
+# soal : aya kharid hozori ha ro ham factor konam ????
