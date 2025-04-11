@@ -179,10 +179,8 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
 
         for product in products:
             shop = product['shop_name']
-            if "اسپارک" in shop : 
-                f.write(f"sparkkkk : {shop } ----------- {product['price_text']} \n") # tst
                                 
-            elif product['availability'] and product['is_adv'] == False :
+            if product['availability'] and product['is_adv'] == False :
 
                 price = int(''.join(filter(str.isdigit, product['price_text'])))
 
@@ -268,7 +266,7 @@ def main():
     d.active = True # fix me : after fixing (ایرادات)
 
     box , sites = scrap(d)
-    edit( d , box.suggest_price() , [site.suggest_price() for site in sites] )
+    edit( d , box.suggest_price() , [ site.suggest_price() for site in sites] )  # showlist
     
 
 
