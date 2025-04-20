@@ -20,66 +20,98 @@ class Data :
         self.price = float(price)    
         self.price_tax = int(price_tax)           
         self.number =int(number)          
-        self.active =bool(int(active))    
+        self.active =bool(int(active))
+        self.buy_box = None    
+        self.sites = None    
 
-
-def get_data_from_csv() -> list[Data]:
-
-    if os.path.exists("active.txt"):  # tst
-        os.remove("active.txt")  
-
-    if os.path.exists("All.txt"):  # tst
-        os.remove("All.txt")  
-
-    csvFolder = Path("input CSV folder")
-
-    files = list(csvFolder.glob("*.csv"))
-    if files:
-        csv_file_path = files[0]
-
-
-    data = []
-    # reading csv file
-    with open(csv_file_path, 'r' , encoding='utf-8') as csvfile:
-
-        csvreader = csv.reader(csvfile , delimiter=';')
-        next(csvreader)
-        for line in csvreader:
-            data.append(Data(line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8]))
+    def update(self) ->  tuple['Site' ,list['Site']] :
+        "update the product best sites & buy-box  price from trob and return+store it "
+        self.buy_box , self.sites = scrap(self)
 
 
 
-    with open("active.txt" , "w" , encoding='utf-8')as f: # tst
-        temp = 0
-        for d in data:
-            if   d.number ==0 and d.active == True: 
+
+class CsvData :
+    """
+        creat one object of this class for getting a Data list from csv and use it\n
+        class contains a list[Data] \n
+        or\n 
+        use .next function to return a object(Data)
+    """
+    _instance = None
+    index = 0
+    list_data = []
+    list_new_prices = list[tuple[ 'Site' , list['Site']]]
+    def __init__(self) :
+
+        if os.path.exists("active.txt"):  # tst
+            os.remove("active.txt")  
+
+        if os.path.exists("All.txt"):  # tst
+            os.remove("All.txt")  
+
+        csvFolder = Path("input CSV folder")
+
+        files = list(csvFolder.glob("*.csv"))
+        if files:
+            csv_file_path = files[0]
+
+
+        # reading csv file
+        with open(csv_file_path, 'r' , encoding='utf-8') as csvfile:
+
+            csvreader = csv.reader(csvfile , delimiter=';')
+            next(csvreader)
+            for line in csvreader:
+                self.list.append(Data(line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8]))
+
+
+
+        with open("active.txt" , "w" , encoding='utf-8')as f: # tst
+            temp = 0
+            for d in self.list:
+                if   d.number ==0 and d.active == True: 
+                    f.write(str(d.id))
+                    f.write('\n')
+                    temp+=1
+            print("temp:", temp)
+
+        with open("All.txt" , "w" , encoding='utf-8')as f: # tst
+            for d in self.list:
                 f.write(str(d.id))
+                f.write(";")
+                f.write(d.picture)
+                f.write(";")
+                f.write(d.name)
+                f.write(";")
+                f.write(d.code)
+                f.write(";")
+                f.write(d.group)
+                f.write(";")
+                f.write(str(d.price))
+                f.write(";")
+                f.write(str(d.price_tax))
+                f.write(";")
+                f.write(str(d.number))
+                f.write(";")
+                f.write(str(d.active))
                 f.write('\n')
-                temp+=1
-        print("temp:", temp)
+                
+    def next(self) :
+        """
+            this will go forward in list \n
+            before .next() -> .current() == list[0] \n
+            after  .next() -> .current() == list[1] 
+        """
+        self.index += 1 
+    
+    def current(self) -> Data:
+        "return current data from list"
+        return self.list[self.index]
+    
 
-    with open("All.txt" , "w" , encoding='utf-8')as f: # tst
-        for d in data:
-            f.write(str(d.id))
-            f.write(";")
-            f.write(d.picture)
-            f.write(";")
-            f.write(d.name)
-            f.write(";")
-            f.write(d.code)
-            f.write(";")
-            f.write(d.group)
-            f.write(";")
-            f.write(str(d.price))
-            f.write(";")
-            f.write(str(d.price_tax))
-            f.write(";")
-            f.write(str(d.number))
-            f.write(";")
-            f.write(str(d.active))
-            f.write('\n')
+        
 
-    return data
 #                       csv              site
 
 #  all :                951               951
@@ -256,8 +288,8 @@ def UnUseAbale_show(box : Site , sites : list[Site] ): # fix me : delete me
 
 # main.py :
 def main():
-    data = get_data_from_csv()
-
+    csv_list = CsvData()
+    d = csv_list.next()
     app = QApplication(sys.argv)
     ui_window = MainApp()
 
