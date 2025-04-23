@@ -6,7 +6,9 @@ import os
 import csv 
 from json import loads
 from bs4.element import Tag    
-
+from PyQt5.QtWidgets import QApplication
+from UI import MainApp
+import sys
 
 class Data :
     def __init__(self,id,picture,name,code,group,price,price_tax,number,active) : 
@@ -247,16 +249,27 @@ def UnUseAbale_show(box : Site , sites : list[Site] ): # fix me : delete me
         for i , site in enumerate(sites):
             f.write(f"{i+1}- {site.price} calced with {site.name} \n")
 
-def ui():
-    pass # alan injayim !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 
-def edit (data : Data, box : Site , sites : list[Site] ):
-    ui()
+
+
 
 
 # main.py :
 def main():
     data = get_data_from_csv()
+
+    app = QApplication(sys.argv)
+    ui_window = MainApp()
+
+    # Example: Connect additional signals or perform setup
+    ui_window.pushButton.clicked.connect(lambda: print("Custom Next logic"))
+    ui_window.pushButton_2.clicked.connect(lambda: print("Custom Back logic"))
+    ui_window.pushButton_3.clicked.connect(lambda: print("Custom Save logic"))
+
+    ui_window.show()
+    sys.exit(app.exec_())
+
+    # ina bayad bre bala :::::::::::::::
     # for d in data:
     #     loop_edit_data(d)
     d = data[22] #tst 
@@ -264,9 +277,8 @@ def main():
     d = data[23] #tst
     d = data[8] #tst  id =18
     d.active = True # fix me : after fixing (ایرادات)
-
     box , sites = scrap(d)
-    edit( d , box.suggest_price() , [ site.suggest_price() for site in sites] )  # showlist
+    # ::::::::::::::: ina bayad bre bala 
     
 
 

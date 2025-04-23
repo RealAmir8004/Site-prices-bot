@@ -9,7 +9,8 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import pyqtSlot
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -135,13 +136,27 @@ class Ui_MainWindow(object):
         self.saveButton.setText(_translate("MainWindow", "save"))
 
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    
-    sys.exit(app.exec_())
+class MainApp(QMainWindow, Ui_MainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        self.setup_connections()
+
+    def setup_connections(self):
+        """Connect signals to slots and add custom logic."""
+        self.pushButton.clicked.connect(self.on_next_clicked)
+        self.pushButton_2.clicked.connect(self.on_back_clicked)
+        self.pushButton_3.clicked.connect(self.on_save_clicked)
+
+    @pyqtSlot()
+    def on_next_clicked(self):
+        print("Next button clicked!")
+
+    @pyqtSlot()
+    def on_back_clicked(self):
+        print("Back button clicked!")
+
+    @pyqtSlot()
+    def on_save_clicked(self):
+        print("Save button clicked!")
+
