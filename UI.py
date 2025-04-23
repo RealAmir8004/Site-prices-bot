@@ -93,13 +93,13 @@ class Ui_MainWindow(object):
         self.label_productName.setObjectName("label_productName")
         self.nextButton = QtWidgets.QPushButton(self.centralwidget)
         self.nextButton.setGeometry(QtCore.QRect(470, 560, 75, 23))
-        self.nextButton.setObjectName("pushButton")
+        self.nextButton.setObjectName("nextButton")
         self.backButton = QtWidgets.QPushButton(self.centralwidget)
         self.backButton.setGeometry(QtCore.QRect(390, 560, 75, 23))
-        self.backButton.setObjectName("pushButton_2")
+        self.backButton.setObjectName("backButton")
         self.saveButton = QtWidgets.QPushButton(self.centralwidget)
         self.saveButton.setGeometry(QtCore.QRect(250, 560, 75, 23))
-        self.saveButton.setObjectName("pushButton_3")
+        self.saveButton.setObjectName("saveButton")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 877, 21))
@@ -144,9 +144,9 @@ class MainApp(QMainWindow, Ui_MainWindow):
 
     def setup_connections(self):
         """Connect signals to slots and add custom logic."""
-        self.pushButton.clicked.connect(self.on_next_clicked)
-        self.pushButton_2.clicked.connect(self.on_back_clicked)
-        self.pushButton_3.clicked.connect(self.on_save_clicked)
+        self.nextButton.clicked.connect(self.on_next_clicked)
+        self.backButton.clicked.connect(self.on_back_clicked)
+        self.saveButton.clicked.connect(self.on_save_clicked)
 
     @pyqtSlot()
     def on_next_clicked(self):
