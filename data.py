@@ -14,12 +14,11 @@ class Data :
         self.price_tax = int(price_tax)           
         self.number =int(number)          
         self.active =bool(int(active))
-        self.buy_box = None    
-        self.sites = None    
+        self.sites : Site = None    
 
     def update(self) ->  tuple[Site ,list[Site]] :
-        "update the product best sites & buy-box  price from trob and return+store it "
-        self.buy_box , self.sites = scrap(self.name ,self.id)
+        "update the product best sites price from trob and return+store it "
+        self.sites = scrap(self.name ,self.id)
 
 
 class CsvData :
@@ -94,7 +93,8 @@ class CsvData :
     def nextData(self) -> Data:
         " this will go forward in list and return (this will show list[0] for first use)"
         nxt = self.__next()
-        if nxt.buy_box == None:
-            nxt.update()  # fix me :what if buy_box steel none
+         # fix me :what if sites steel none
+        if nxt.sites == None: 
+            nxt.update() 
         return nxt
      
