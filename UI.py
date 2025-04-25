@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot , pyqtSignal
 from data import Data
 
 class Ui_MainWindow(object):
@@ -137,21 +137,35 @@ class Ui_MainWindow(object):
 
 
 class MainApp(QMainWindow, Ui_MainWindow):
+    dataChanged = pyqtSignal(Data)
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        # self.setup_connections()
+        self.setup_connections()
 
-    # def setup_connections(self):
-    #     """Connect signals to slots and add custom logic."""
-    #     self.nextButton.clicked.connect(self.next_clicked)
-    #     self.backButton.clicked.connect(self.back_clicked)
-    #     self.saveButton.clicked.connect(self.save_clicked)
+    def setup_connections(self):
+        self.dataChanged.connect(self.update_on_next) 
 
     @pyqtSlot(Data)
-    def next_clicked(self , d : Data):
-        self.label_productName.setText(d.name)
-        # injayimannnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+    def update_on_next(self , data : Data):
+        if not data.sites or len(data.sites) < 4:
+            print("Error: Data sites are not properly populated.")
+            return
+        
+        print(f"Updating UI with Data: {data.name}, Sites: {data.sites}")
+        self.label_productName.setText(data.name)
+
+        for i, site in enumerate(data.sites[:4]):  
+            bg_color = "background-color: red;" if site.badged else "background-color: white;"
+            getattr(self, f"label_{i+2}").setText(site.name)
+            getattr(self, f"label_{i+2}0").setText(str(site.price))
+            getattr(self, f"radioButton_{i+2}").setText(str(site.suggested_price))
+            getattr(self, f"label_{i+2}").setStyleSheet(bg_color)
+            getattr(self, f"label_{i+2}0").setStyleSheet(bg_color)
+            getattr(self, f"radioButton_{i+2}").setStyleSheet(bg_color)
+
+        self.doubleSpinBox_5.setValue(data.buy_box.suggested_price)
+        self.doubleSpinBox_5.setSingleStep(5000)
 
     @pyqtSlot()
     def back_clicked(self):

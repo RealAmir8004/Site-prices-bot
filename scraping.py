@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 from json import loads
 from bs4.element import Tag 
 
+RESULTS = 4
+
 def search_google (data_name ,data_id):
     print("searching google for ", data_id, ":")
     from googlesearch import search
@@ -41,26 +43,26 @@ class Site :
         self.name = shop_name
         self.price = price 
         self.badged = badged
-
+        self.suggested_price = self.__suggest()
+        
     def __lt__(self, other):  # Define sorting rule (lower grade first)
         return self.price < other.price
     
-    def suggest_price(self):
+    def __suggest(self):
         if self.badged: # ckeck if guarantee_badge !!!!!!!!! mohem : in behtarin halate  bekhate algoritm buy_box torob
             print("issss  badged", end=" ") #tst
             mod = self.price % 10_000
             if mod <= 4000: # baraye inke age masalan ::  mod==0  bod price faghat 1000 ta kam nashe (zaye mishe)
                 mod += (4000-mod)
-            new_price = self.price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
+            self.suggested_price = self.price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
         
         else : # is NOT badged 
             print("is Not badged", end=" ") #tst
-            new_price = ( self.price *105 ) / 100 - 1000 
-            mod = new_price % 10_000
+            temp = ( self.price *105 ) / 100 - 1000 
+            mod = temp % 10_000
             if mod < 9000 and  self.price>=200_000  :
-                new_price =  new_price - (mod + 1000)  # we can upgrade to ...
-
-        return Site(self.name , new_price , self.badged)    
+                temp =  temp - (mod + 1000)  # we can upgrade to ...
+            self.suggested_price = temp
         
     
 # (info@) : rah haye mokhtalefi baraye sort bodan  list ha hast 
@@ -85,7 +87,7 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
     sites : list[Site]= []
     with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
 
-        for product in products:
+        for product in products[0:RESULTS]:
             shop = product['shop_name']
                                 
             if product['availability'] and product['is_adv'] == False :
@@ -108,7 +110,7 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
     
 
 def scrap (data_id, data_name):
-
+    """ search torob for a product and return buy-box and 'results_num' of sites in 'Site' object  """
     results = search_google(data_name ,data_id)
     print("searching torob :")
     response = get_html(results[0]) # targets[0] = first torob result(url)
