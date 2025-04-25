@@ -4,7 +4,7 @@ import sys
 from data import CsvData
 
 # main.py :
-def main():
+if __name__ == "__main__" :
     csv_list = CsvData()
     app = QApplication(sys.argv)
     ui_window = MainApp()
@@ -16,5 +16,3 @@ def main():
     ui_window.show()
     sys.exit(app.exec_())
 
-
-main()
