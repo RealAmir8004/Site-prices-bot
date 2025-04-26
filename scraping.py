@@ -41,28 +41,28 @@ def get_html(url : str ) -> requests.Response:
 class Site :
     def __init__(self , shop_name  , price : int , badged : bool = False ) :
         self.name = shop_name
-        self.price = price 
+        self.price = int(price )
         self.badged = badged
-        self.suggested_price = self.__suggest()
+        self.suggested_price = self._suggest()
         
     def __lt__(self, other):  # Define sorting rule (lower grade first)
         return self.price < other.price
     
-    def __suggest(self):
+    def _suggest(self) -> int:
+        susuggested = self.price
         if self.badged: # ckeck if guarantee_badge !!!!!!!!! mohem : in behtarin halate  bekhate algoritm buy_box torob
-            print("issss  badged", end=" ") #tst
             mod = self.price % 10_000
             if mod <= 4000: # baraye inke age masalan ::  mod==0  bod price faghat 1000 ta kam nashe (zaye mishe)
                 mod += (4000-mod)
-            self.suggested_price = self.price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
+            susuggested = self.price - (mod + 1000)  # fix me : we can upgrade to new versions later (price_reduce->from after-csv-faze1 (commit) )
         
         else : # is NOT badged 
-            print("is Not badged", end=" ") #tst
             temp = ( self.price *105 ) / 100 - 1000 
             mod = temp % 10_000
             if mod < 9000 and  self.price>=200_000  :
                 temp =  temp - (mod + 1000)  # we can upgrade to ...
-            self.suggested_price = temp
+            susuggested = temp    
+        return int(susuggested)
         
     
 # (info@) : rah haye mokhtalefi baraye sort bodan  list ha hast 

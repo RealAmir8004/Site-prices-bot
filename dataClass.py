@@ -16,18 +16,17 @@ class Data :
         self.active =bool(int(active))
         self.sites : list[Site] = None    
 
-    def update(self) ->  tuple[Site ,list[Site]] :
+    def update(self):
         "update the product best sites price from trob and return+store it "
         # self.sites = scrap(self.name ,self.id)
         #tst
-        self.sites =[ 
-        Site(shop_name="Shop A", price=100000, badged=True),
-        Site(shop_name="Shop B", price=95000, badged=False),
-        Site(shop_name="Shop C", price=120000, badged=True),
-        Site(shop_name="Shop D", price=110000, badged=False),
-        Site(shop_name="Shop E", price=1110000, badged=False),
-    ]
-
+        self.sites = [
+            Site(shop_name=f"Shop A ({self.name[0:3]})", price=self.price, badged=len(self.name) % 2 == 0),
+            Site(shop_name=f"Shop B ({self.name[1:4]})", price=self.price * 0.95, badged=self.price > 100000),
+            Site(shop_name=f"Shop C ({self.name[2:5]})", price=self.price * 1.2, badged=self.active),
+            Site(shop_name=f"Shop D ({self.name[-4:]})", price=self.price * 1.1, badged=self.number > 10),
+            Site(shop_name=f"Shop E ({self.name[-3:]})", price=self.price * 1.5, badged=self.price_tax > 5000),
+        ]
 
 class CsvData :
     """
