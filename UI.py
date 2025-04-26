@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import pyqtSlot , pyqtSignal
-from data import Data
+from dataClass import Data
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -148,11 +148,14 @@ class MainApp(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot(Data)
     def update_on_next(self , data : Data):
+        if data is None:
+            print("No data to display.")
+            return
         if not data.sites or len(data.sites) < 4:
             print("Error: Data sites are not properly populated.")
             return
         
-        print(f"Updating UI with Data: {data.name}, Sites: {data.sites}")
+        print(f"Updating UI with Data: {data.id}, Sites:")
         self.label_productName.setText(data.name)
 
         for i, site in enumerate(data.sites[:4]):  

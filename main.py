@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QApplication
 from UI import MainApp
 import sys
-from data import CsvData
+from dataClass import CsvData
 
 # RESULTS defined in scraping.py 
 # main.py :

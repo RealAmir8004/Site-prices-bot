@@ -14,11 +14,19 @@ class Data :
         self.price_tax = int(price_tax)           
         self.number =int(number)          
         self.active =bool(int(active))
-        self.sites : Site = None    
+        self.sites : list[Site] = None    
 
     def update(self) ->  tuple[Site ,list[Site]] :
         "update the product best sites price from trob and return+store it "
-        self.sites = scrap(self.name ,self.id)
+        # self.sites = scrap(self.name ,self.id)
+        #tst
+        self.sites =[ 
+        Site(shop_name="Shop A", price=100000, badged=True),
+        Site(shop_name="Shop B", price=95000, badged=False),
+        Site(shop_name="Shop C", price=120000, badged=True),
+        Site(shop_name="Shop D", price=110000, badged=False),
+        Site(shop_name="Shop E", price=1110000, badged=False),
+    ]
 
 
 class CsvData :
@@ -30,7 +38,7 @@ class CsvData :
     """
     _instance = None
     __index = -1
-    __list_data = []
+    __list_data : list[Data]= []
     def __init__(self) :
 
         if os.path.exists("active.txt"):  # tst
@@ -86,15 +94,16 @@ class CsvData :
                 f.write(str(d.active))
                 f.write('\n')
                 
-    def __next(self) -> Data:
-        self.__index += 1 
-        return self.__list_data[self.__index]
-    
     def nextData(self) -> Data:
-        " this will go forward in list and return (this will show list[0] for first use)"
-        nxt = self.__next()
-         # fix me :what if sites steel none
-        if nxt.sites == None: 
-            nxt.update() 
-        return nxt
+        """This will go forward in the list and return the next Data object."""
+        try:
+            self.__index += 1
+            nxt = self.__list_data[self.__index]
+            if nxt.sites is None:
+                nxt.update()
+            print(f"showing Data object: {nxt.id}")
+            return nxt
+        except IndexError:
+            print("No more data available.")
+            return None  # Return None if the list is exhausted
      
