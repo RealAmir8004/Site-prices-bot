@@ -146,10 +146,10 @@ class MainApp(QMainWindow, Ui_MainWindow):
         self.setup_connections()
 
     def setup_connections(self):
-        self.dataChanged.connect(self.update_on_next) 
+        self.dataChanged.connect(self.update_table) 
 
     @pyqtSlot(Data)
-    def update_on_next(self , data : Data):
+    def update_table(self , data : Data):
         if data is None:
             print("No data to display.")
             return

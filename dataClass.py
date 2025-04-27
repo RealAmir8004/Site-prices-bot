@@ -93,10 +93,13 @@ class CsvData :
                 f.write(str(d.active))
                 f.write('\n')
                 
-    def nextData(self) -> Data:
+    def showData(self , is_next : bool) -> Data:
         """This will go forward in the list and return the next Data object."""
         try:
-            self.__index += 1
+            if is_next :
+                self.__index += 1
+            else :    
+                self.__index -= 1
             nxt = self.__list_data[self.__index]
             if nxt.sites is None:
                 nxt.update()

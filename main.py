@@ -10,8 +10,8 @@ if __name__ == "__main__" :
     app = QApplication(sys.argv)
     ui_window = MainApp()
 
-    ui_window.nextButton.clicked.connect(lambda: ui_window.dataChanged.emit(csv_list.nextData()))
-    ui_window.backButton.clicked.connect(lambda: print("Custom Back logic"))
+    ui_window.nextButton.clicked.connect(lambda: ui_window.dataChanged.emit(csv_list.showData(True)))
+    ui_window.backButton.clicked.connect(lambda: ui_window.dataChanged.emit(csv_list.showData(False)))
     ui_window.saveButton.clicked.connect(lambda: print("Custom Save logic"))
 
     ui_window.show()
