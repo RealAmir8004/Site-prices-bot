@@ -40,12 +40,6 @@ class CsvData :
     __list_data : list[Data]= []
     def __init__(self) :
 
-        if os.path.exists("active.txt"):  # tst
-            os.remove("active.txt")  
-
-        if os.path.exists("All.txt"):  # tst
-            os.remove("All.txt")  
-
         csvFolder = Path("input CSV folder")
 
         files = list(csvFolder.glob("*.csv"))
@@ -62,37 +56,6 @@ class CsvData :
                 self.__list_data.append(Data(line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8]))
 
 
-
-        with open("active.txt" , "w" , encoding='utf-8')as f: # tst
-            temp = 0
-            for d in self.__list_data:
-                if   d.number ==0 and d.active == True: 
-                    f.write(str(d.id))
-                    f.write('\n')
-                    temp+=1
-            print("temp:", temp)
-
-        with open("All.txt" , "w" , encoding='utf-8')as f: # tst
-            for d in self.__list_data:
-                f.write(str(d.id))
-                f.write(";")
-                f.write(d.picture)
-                f.write(";")
-                f.write(d.name)
-                f.write(";")
-                f.write(d.code)
-                f.write(";")
-                f.write(d.group)
-                f.write(";")
-                f.write(str(d.price))
-                f.write(";")
-                f.write(str(d.price_tax))
-                f.write(";")
-                f.write(str(d.number))
-                f.write(";")
-                f.write(str(d.active))
-                f.write('\n')
-                
     def showData(self , is_next : bool) -> Data:
         """This will go forward in the list and return the next Data object."""
         try:
