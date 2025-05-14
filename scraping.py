@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from json import loads
 from bs4.element import Tag 
 
-RESULTS = 4
+from constants import RESULTS
 
 def search_google (data_name ,data_id):
     print("searching google for ", data_id, ":")

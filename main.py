@@ -3,7 +3,7 @@ from UI import MainApp
 import sys
 from dataClass import CsvData
 
-# RESULTS defined in scraping.py 
+# RESULTS defined in constants.py
 # main.py :
 if __name__ == "__main__" :
     csv_list = CsvData()
