@@ -14,7 +14,8 @@ class Data :
         self.price_tax = int(price_tax)           
         self.number =int(number)          
         self.active =bool(int(active))
-        self.sites : list[Site] = None    
+        self.sites : list[Site] = None
+        self.chosen_site = None
 
     def update(self):
         "update the product best sites price from trob and return+store it "
@@ -27,6 +28,9 @@ class Data :
             Site(shop_name=f"Shop D ({self.name[-4:]})", price=self.price * 1.1, badged=self.number > 10),
             Site(shop_name=f"Shop E ({self.name[-3:]})", price=self.price * 1.5, badged=self.price_tax > 5000),
         ]
+
+    def chose_site (self , ch : Site) :
+        self.chosen_site = ch
 
 class CsvData :
     """
@@ -55,6 +59,9 @@ class CsvData :
             for line in csvreader:
                 self.__list_data.append(Data(line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8]))
 
+    def current(self)-> Data :
+            return self.__list_data[self.__index]
+
 
     def showData(self , is_next : bool) -> Data:
         """This will go forward in the list and return the next Data object."""
@@ -63,11 +70,11 @@ class CsvData :
                 self.__index += 1
             else :    
                 self.__index -= 1
-            nxt = self.__list_data[self.__index]
-            if nxt.sites is None:
-                nxt.update()
-            print(f"showing Data object: {nxt.id}")
-            return nxt
+            curr = self.current()
+            if curr.sites is None:
+                curr.update()
+            print(f"showing Data object: {curr.id}")
+            return curr
         except IndexError:
             print("No more data available.")
             return None  # Return None if the list is exhausted

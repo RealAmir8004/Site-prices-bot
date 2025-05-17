@@ -2,6 +2,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import pyqtSlot , pyqtSignal
 from dataClass import Data
+from dataClass import Site
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -109,6 +111,15 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+
+        # Create a QButtonGroup for the radio buttons
+        self.radioButtonGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.radioButtonGroup.addButton(self.radioButton_1)
+        self.radioButtonGroup.addButton(self.radioButton_2)
+        self.radioButtonGroup.addButton(self.radioButton_3)
+        self.radioButtonGroup.addButton(self.radioButton_4)
+        self.radioButtonGroup.addButton(self.radioButton_5)
+        self.radioButtonGroup.addButton(self.radioButton_6)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
