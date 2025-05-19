@@ -8,20 +8,24 @@ from constants import RESULTS , RESULTS_NUM
 
 def search_google (data_name ,data_id):
     print("searching google for ", data_id, ":")
-    from googlesearch import search
-    import re
-    query = data_name
-    targets = []
-    target_pattern = r"https://torob.com/"
-    with open("searchResult_ME.txt","w") as file:
-        for result in search(query , RESULTS_NUM):
-            file.write(f"\n{result}\n")
-            if re.match(target_pattern,result):
-                targets.append( result)
-    
-    print("prinring all search results (first url will be used) :")
-    print(targets)
-    return targets
+    try:
+        from googlesearch import search
+        import re
+        query = data_name
+        targets = []
+        target_pattern = r"https://torob.com/"
+        with open("searchResult_ME.txt","w") as file: #tst
+            for result in search(query , RESULTS_NUM):
+                file.write(f"\n{result}\n")
+                if re.match(target_pattern,result):
+                    targets.append( result)
+        
+        print("prinring all search results (first url will be used) :")
+        print(targets)
+        return targets
+    except Exception as e:
+        print(f"Error during Google search: {e}")
+        return []
 
 def get_html(url : str ) -> requests.Response:
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
@@ -30,8 +34,10 @@ def get_html(url : str ) -> requests.Response:
         response.raise_for_status()
     except HTTPError as err:
         print(f'HTTP error occurred: {err}')  
+        return None
     except Exception as err:
         print(f'Other error occurred: {err}') 
+        return None
     else:
         print('Success! no expection with url : ' ,response.url) 
         return response
@@ -80,74 +86,93 @@ class Site :
 from sortedcontainers import SortedList
 import json # tst 
 def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site]]: 
+    try:
+        script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
+        if not script_tag or not script_tag.string:
+            print("Could not find the required script tag for product data.")
+            return [], []
+        json_data = loads(script_tag.string)  
 
-    script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
+        with open("test_data.json", "w", encoding="utf-8") as j: #tst
+            json.dump(json_data, j, ensure_ascii=False, indent=4)
     
-    json_data = loads(script_tag.string)  
-
-    with open("test_data.json", "w", encoding="utf-8") as j: #tst
-        json.dump(json_data, j, ensure_ascii=False, indent=4)
-    
-    products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
+        products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
+    except Exception as e:
+        print(f"Error parsing product data: {e}")
+        return [], []
 
     # (info@) 
     badged_sites = []
     unbadged_sites = []
-    with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
+    try:
+       with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
+            for product in products[:RESULTS-2]: # 2 = 1(buy-box ) + 1 ((may be)old price)
+                shop = product.get('shop_name', '')
+                try:
+                    if product.get('availability') and not product.get('is_adv', False):
+                        price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
+                        badged = product.get('is_filtered_by_warranty', False)
+                        if "اسپارک" in shop :
+                            badged_sites.append(Site(None, price, True, False ))  
+                            continue
+                        if badged :
+                            badged_sites.append(Site(shop  , price, True ))  
+                        else:
+                            unbadged_sites.append(Site(shop  , price , False ))                   
 
-        for product in products[:RESULTS-2]: # 2 = 1(buy-box ) + 1 ((may be)old price)
-            shop = product['shop_name']
-                                
-            if product['availability'] and product['is_adv'] == False :
-
-                price = int(''.join(filter(str.isdigit, product['price_text'])))
-
-                badged = product['is_filtered_by_warranty']
-
-                if "اسپارک" in shop :
-                    badged_sites.append(Site(None, price, True, False ))  
-                    continue
-                if badged :
-                    badged_sites.append(Site(shop  , price, True ))  
-                else:
-                    unbadged_sites.append(Site(shop  , price , False ))
-
-                f.write(f"------{shop} ----------- {product['price_text']}  \n") # tst
-            else :
-                f.write(f"{shop } ----------- {product['price_text']} \n") # tst
+                        f.write(f"------{shop} ----------- {product.get('price_text', '')}  \n") # tst
+                    else:
+                        f.write(f"{shop} ----------- {product.get('price_text', '')} \n") # tst
+                except Exception as e:
+                    print(f"Error processing product {shop}: {e}")
+    except Exception as e:
+        print(f"Error writing to other_sites.txt: {e}")
     return badged_sites , unbadged_sites 
 
     
 
 def scrap (data_name,data_id):
     """ search torob for a product and return buy-box and 'RESULTS' of sites in 'Site' object arranged by priority """
-    results = search_google(data_name ,data_id)
-    print("searching torob :")
-    response = get_html(results[0]) # targets[0] = first torob result(url)
+    try:
+        results = search_google(data_name ,data_id)
+        if not results:
+            print("No search results found.")
+            return []
+        print("searching torob :")
+        response = get_html(results[0]) # targets[0] = first torob result(url)
+        if response is None:
+            print("Failed to fetch Torob page.")
+            return []
+        soup = BeautifulSoup(response.content , "html5lib")    
 
-    soup = BeautifulSoup(response.content , "html5lib")    
-    
-    with  open("TorobResult3.html" , "w" , encoding='utf-8') as file  : #tst
-        file.write(soup.prettify())
+        with  open("TorobResult3.html" , "w" , encoding='utf-8') as file  : #tst
+            file.write(soup.prettify())
 
-        #def get_sites (soup : BeautifulSoup):  
-    
-    buy_box : Tag= soup.find('div', class_='Showcase_buy_box__q4cpD') # class = Showcase_buy_box__q4cpD # badge =.Showcase_guarantee_badge_text__Kz3AW
+        buy_box : Tag= soup.find('div', class_='Showcase_buy_box__q4cpD') # class = Showcase_buy_box__q4cpD # badge =.Showcase_guarantee_badge_text__Kz3AW
     # code : age buy_box bdard nemikhord
     #   buy_box = olaviat ydone  badish jaygozin she 
-
-    badged_sites , unbadged_sites = get_all_sites(soup) # sites  = all sites 
-    
-    box_name , box_price = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  
-    box = Site( box_name.get_text(strip=True)[8:] ,  int(''.join(filter(str.isdigit, box_price.get_text(strip=True)))) ) # ye object 'Site' az 'buy_box' misaze
-    if box.name in [site.name for site in badged_sites]: # ckeck if guarantee_badge !!!!!!!!! mohem : in behtarin halate  bekhate algoritm buy_box torob
-        box.badged = True
-    print(f"buy box = {box.price}", end=" ") #tst
-    
-    sites = sorted(badged_sites + unbadged_sites)
-    sites.insert(0, box)
-    return sites
-
+        if not buy_box:
+            print("Buy box not found on the page.")
+            return []
+        badged_sites , unbadged_sites = get_all_sites(soup) # sites  = all sites 
+        try:
+            box_name , box_price = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  
+            box = Site(
+                box_name.get_text(strip=True)[8:],
+                int(''.join(filter(str.isdigit, box_price.get_text(strip=True))))
+            )
+            if box.name in [site.name for site in badged_sites]: # ckeck if guarantee_badge !!!!!!!!! mohem : in behtarin halate  bekhate algoritm buy_box torob
+                box.badged = True
+            print(f"buy box = {box.price}", end=" ") #tst
+        except Exception as e:
+            print(f"Error extracting buy box info: {e}")
+            return []
+        sites = sorted(badged_sites + unbadged_sites)
+        sites.insert(0, box)
+        return sites
+    except Exception as e:
+        print(f"Error in scrap(): {e}")
+        return []
     # fix : aya "sites" ke dare kharej mishe be tartibe gheymate ? ---- bayad be tartib gheymat bashe ta algorithm man dorost kar kne
 
     # return  badged_sites , unbadged_sites ,  sites , box  # age badged_sites , unbadged_sites  mikhaym 

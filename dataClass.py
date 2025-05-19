@@ -30,14 +30,14 @@ class Data :
             self.sites= sites[:RESULTS-1]
             bisect.insort(self.sites , Site(None, self.price , suggest_price=False))
 
-        #tst
-        self.sites = [
-            Site(shop_name=f"Shop A ({self.name[0:3]})", price=self.price, badged=len(self.name) % 2 == 0),
-            Site(shop_name=f"Shop B ({self.name[1:4]})", price=self.price * 0.95, badged=self.price > 100000),
-            Site(shop_name=f"Shop C ({self.name[2:5]})", price=self.price * 1.2, badged=self.active),
-            Site(shop_name=f"Shop D ({self.name[-4:]})", price=self.price * 1.1, badged=self.number > 10),
-            Site(shop_name=f"Shop E ({self.name[-3:]})", price=self.price * 1.5, badged=self.price_tax > 5000),
-        ]
+        # #tst
+        # self.sites = [
+        #     Site(shop_name=f"Shop A ({self.name[0:3]})", price=self.price, badged=len(self.name) % 2 == 0),
+        #     Site(shop_name=None, price=self.price * 0.95, badged=self.price > 100000 , suggest_price= False),
+        #     Site(shop_name=f"Shop C ({self.name[2:5]})", price=self.price * 1.2, badged=self.active),
+        #     Site(shop_name=f"Shop D ({self.name[-4:]})", price=self.price * 1.1, badged=self.number > 10),
+        #     Site(shop_name=f"Shop E ({self.name[-3:]})", price=self.price * 1.5, badged=self.price_tax > 5000),
+        # ]
 
     def chose_site (self , ch : Site) :
         self.chosen_site = ch
@@ -45,29 +45,39 @@ class Data :
 class CsvData :
     """
         creat one object of this class for getting a Data list from csv and use it\n
-        class contains a list[Data] \n
-        or\n 
-        use .next function to return a object(Data)
+        class contains a list[Data]
     """
     _instance = None
     __index = -1
     __list_data : list[Data]= []
     def __init__(self) :
 
-        csvFolder = Path("input CSV folder")
+        try:
+            csvFolder = Path("input CSV folder")
 
-        files = list(csvFolder.glob("*.csv"))
-        if files:
+            files = list(csvFolder.glob("*.csv"))
+            if not files:
+                print("Error: No CSV files found in the specified folder.")
+                return
             csv_file_path = files[0]
 
 
-        # reading csv file
-        with open(csv_file_path, 'r' , encoding='utf-8') as csvfile:
+            # reading csv file
+            with open(csv_file_path, 'r' , encoding='utf-8') as csvfile:
 
-            csvreader = csv.reader(csvfile , delimiter=';')
-            next(csvreader)
-            for line in csvreader:
-                self.__list_data.append(Data(line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8]))
+                csvreader = csv.reader(csvfile , delimiter=';')
+                next(csvreader)
+                for line in csvreader:
+                    try:
+                        # if not bool(int(line[8])): # False == active # fix 
+                        if int(line[0]) in [14,18,23,32,33,41,63,64] :
+                            self.__list_data.append(Data(line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8]))
+                    except Exception as e:
+                        print(f"Error parsing line {line}: {e}")
+        except FileNotFoundError:
+            print(f"Error: File {csv_file_path} not found.")
+        except Exception as e:
+            print(f"Unexpected error during CSV loading: {e}")
 
     def current(self)-> Data :
             return self.__list_data[self.__index]
@@ -88,4 +98,6 @@ class CsvData :
         except IndexError:
             print("No more data available.")
             return None  # Return None if the list is exhausted
-     
+        except Exception as e:
+            print(f"Unexpected error in showData: {e}")
+            return None
