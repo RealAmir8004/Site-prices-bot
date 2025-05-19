@@ -87,7 +87,7 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
     sites : list[Site]= []
     with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
 
-        for product in products[0:RESULTS]:
+        for product in products[:RESULTS-2]: # 2 = 1(buy-box ) + 1 ((may be)old price)
             shop = product['shop_name']
                                 
             if product['availability'] and product['is_adv'] == False :

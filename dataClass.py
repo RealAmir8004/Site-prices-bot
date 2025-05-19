@@ -2,6 +2,7 @@ import os
 import csv 
 from pathlib import Path
 from scraping import scrap , Site
+from constants import RESULTS
 
 class Data :
     def __init__(self,id,picture,name,code,group,price,price_tax,number,active) : 
@@ -18,8 +19,9 @@ class Data :
         self.chosen_site = None
 
     def update(self):
-        "update the product best sites price from trob and return+store it "
-        # self.sites = scrap(self.name ,self.id)
+        for site in sites[:RESULTS-1]:
+                self.sites = sites[:RESULTS]
+            self.sites= sites[:RESULTS-1]
         #tst
         self.sites = [
             Site(shop_name=f"Shop A ({self.name[0:3]})", price=self.price, badged=len(self.name) % 2 == 0),

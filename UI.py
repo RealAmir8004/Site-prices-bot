@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import pyqtSlot , pyqtSignal
 from dataClass import Data
 from dataClass import Site
+from constants import RESULTS
 
 
 class Ui_MainWindow(object):
@@ -183,7 +184,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         if data is None:
             print("No data to display.")
             return
-        if not data.sites or len(data.sites) < 4:
+        if not data.sites or len(data.sites) < RESULTS:
             print("Error: Data sites are not properly populated.")
             return
         
