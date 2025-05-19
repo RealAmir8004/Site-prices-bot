@@ -4,18 +4,17 @@ from bs4 import BeautifulSoup
 from json import loads
 from bs4.element import Tag 
 
-from constants import RESULTS
+from constants import RESULTS , RESULTS_NUM
 
 def search_google (data_name ,data_id):
     print("searching google for ", data_id, ":")
     from googlesearch import search
     import re
     query = data_name
-    num_results = 10
     targets = []
     target_pattern = r"https://torob.com/"
     with open("searchResult_ME.txt","w") as file:
-        for result in search(query , num_results):
+        for result in search(query , RESULTS_NUM):
             file.write(f"\n{result}\n")
             if re.match(target_pattern,result):
                 targets.append( result)
