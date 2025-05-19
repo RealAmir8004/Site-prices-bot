@@ -119,7 +119,7 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
 
     
 
-def scrap (data_id, data_name):
+def scrap (data_name,data_id):
     """ search torob for a product and return buy-box and 'RESULTS' of sites in 'Site' object arranged by priority """
     results = search_google(data_name ,data_id)
     print("searching torob :")
