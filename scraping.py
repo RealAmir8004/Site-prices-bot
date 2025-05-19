@@ -39,14 +39,24 @@ def get_html(url : str ) -> requests.Response:
 
 
 class Site :
-    def __init__(self , shop_name  , price : int , badged : bool = False ) :
+    def __init__(self , shop_name  , price : int , badged : bool = False , suggest_price : bool = True) :
+        """if Site.name is spark->suggest_price must be False """
         self.name = shop_name
         self.price = int(price )
         self.badged = badged
-        self.suggested_price = self._suggest()
+        if suggest_price :
+            self.suggested_price = self._suggest()
+        else:
+            self.suggested_price = "dont change price"
         
-    def __lt__(self, other):  # Define sorting rule (lower grade first)
-        return self.price < other.price
+    def __lt__(self, other):  # Define sorting rule = buy-box of Torob priority rule 
+        if self.badged == other.badged:
+            return self.price < other.price
+        if self.badged and not other.badged:
+            return self.price < (other.price * 105) / 100
+        if not self.badged and other.badged:
+            return (self.price * 105) / 100 < other.price
+        return False
     
     def _suggest(self) -> int:
         susuggested = self.price
@@ -84,7 +94,6 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
     # (info@) 
     badged_sites = []
     unbadged_sites = []
-    sites : list[Site]= []
     with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
 
         for product in products[:RESULTS-2]: # 2 = 1(buy-box ) + 1 ((may be)old price)
@@ -95,22 +104,24 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
                 price = int(''.join(filter(str.isdigit, product['price_text'])))
 
                 badged = product['is_filtered_by_warranty']
+
+                if "اسپارک" in shop :
+                    badged_sites.append(Site(None, price, True, False ))  
+                    continue
                 if badged :
                     badged_sites.append(Site(shop  , price, True ))  
                 else:
                     unbadged_sites.append(Site(shop  , price , False ))
 
-                sites.append(Site(shop  , price  , badged))
-
                 f.write(f"------{shop} ----------- {product['price_text']}  \n") # tst
             else :
                 f.write(f"{shop } ----------- {product['price_text']} \n") # tst
-    return badged_sites , unbadged_sites, sites 
+    return badged_sites , unbadged_sites 
 
     
 
 def scrap (data_id, data_name):
-    """ search torob for a product and return buy-box and 'results_num' of sites in 'Site' object  """
+    """ search torob for a product and return buy-box and 'RESULTS' of sites in 'Site' object arranged by priority """
     results = search_google(data_name ,data_id)
     print("searching torob :")
     response = get_html(results[0]) # targets[0] = first torob result(url)
@@ -126,7 +137,7 @@ def scrap (data_id, data_name):
     # code : age buy_box bdard nemikhord
     #   buy_box = olaviat ydone  badish jaygozin she 
 
-    badged_sites , unbadged_sites ,  sites  = get_all_sites(soup) # sites  = all sites 
+    badged_sites , unbadged_sites = get_all_sites(soup) # sites  = all sites 
     
     box_name , box_price = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  
     box = Site( box_name.get_text(strip=True)[8:] ,  int(''.join(filter(str.isdigit, box_price.get_text(strip=True)))) ) # ye object 'Site' az 'buy_box' misaze
@@ -134,16 +145,10 @@ def scrap (data_id, data_name):
         box.badged = True
     print(f"buy box = {box.price}", end=" ") #tst
     
-    if "اسپارک" in box.name: # need fix in new version : if ... and (buy_box.price == uncorrect ) 
-        
-        if not badged_sites:
-            box = unbadged_sites[0] # fix = code repetaion
+    sites = sorted(badged_sites + unbadged_sites)
+    sites.insert(0, box)
+    return sites
 
-        elif badged_sites[0].price < (unbadged_sites[0].price * 105)/100 :
-            box = badged_sites[0]
-        else :
-            box = unbadged_sites[0] 
-        print(f"---> changed to : {box.price}", end=" ") #tst
-    
-    return box , sites  
+    # fix : aya "sites" ke dare kharej mishe be tartibe gheymate ? ---- bayad be tartib gheymat bashe ta algorithm man dorost kar kne
+
     # return  badged_sites , unbadged_sites ,  sites , box  # age badged_sites , unbadged_sites  mikhaym 
