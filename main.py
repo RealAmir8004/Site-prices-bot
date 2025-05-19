@@ -29,17 +29,19 @@ class MainController:
 
         if checked_button is None:
             print("No option selected!")
-            chosen_one = 0
-        elif checked_button == self.ui_window.radioButton_1:
+            return
+        elif checked_button == self.ui_window.radioButton_0:
             chosen_one = current_data.sites[0]
-        elif checked_button == self.ui_window.radioButton_2:
+        elif checked_button == self.ui_window.radioButton_1:
             chosen_one = current_data.sites[1]
-        elif checked_button == self.ui_window.radioButton_3:
+        elif checked_button == self.ui_window.radioButton_2:
             chosen_one = current_data.sites[2]
-        elif checked_button == self.ui_window.radioButton_4:
+        elif checked_button == self.ui_window.radioButton_3:
             chosen_one = current_data.sites[3]
-        elif checked_button == self.ui_window.radioButton_5:
+        elif checked_button == self.ui_window.radioButton_4:
             chosen_one = current_data.sites[4]
+        elif checked_button == self.ui_window.radioButton_5:
+            chosen_one = current_data.sites[5]
         elif checked_button == self.ui_window.radioButton_6:
             chosen_one = Site("Custom", self.ui_window.spinBox.value())
 

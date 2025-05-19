@@ -130,6 +130,7 @@ class Ui_MainWindow(object):
 
         # Create a QButtonGroup for the radio buttons
         self.radioButtonGroup = QtWidgets.QButtonGroup(MainWindow)
+        self.radioButtonGroup.addButton(self.radioButton_0)
         self.radioButtonGroup.addButton(self.radioButton_1)
         self.radioButtonGroup.addButton(self.radioButton_2)
         self.radioButtonGroup.addButton(self.radioButton_3)
@@ -184,21 +185,21 @@ class MainApp(QMainWindow, Ui_MainWindow):
         if data is None:
             print("No data to display.")
             return
-        if not data.sites or len(data.sites) < RESULTS:
+        if not data.sites or len(data.sites) < RESULTS-1:
             print("Error: Data sites are not properly populated.")
             return
         
         print(f"Updating UI with Data: {data.id}, Sites:")
         self.label_productName.setText(data.name)
 
-        for i, site in enumerate(data.sites[:5]):  
-            bg_color = "background-color: red;" if site.badged else "background-color: white;"
-            getattr(self, f"label_{i+1}").setText(site.name)
-            getattr(self, f"label_{i+1}0").setText(str(site.price))
-            getattr(self, f"radioButton_{i+1}").setText(str(site.suggested_price))
-            getattr(self, f"label_{i+1}").setStyleSheet(bg_color)
-            getattr(self, f"label_{i+1}0").setStyleSheet(bg_color)
-            getattr(self, f"radioButton_{i+1}").setStyleSheet(bg_color)
+        for i, site in enumerate(data.sites):  
+            bg_color ="background-color: green;" if site.name is None else "background-color: red;" if site.badged  else "background-color: white;"
+            getattr(self, f"label_{i}").setText(site.name)
+            getattr(self, f"label_{i}0").setText(str(site.price))
+            getattr(self, f"radioButton_{i}").setText(str(site.suggested_price))
+            getattr(self, f"label_{i}").setStyleSheet(bg_color)
+            getattr(self, f"label_{i}0").setStyleSheet(bg_color)
+            getattr(self, f"radioButton_{i}").setStyleSheet(bg_color)
 
         self.spinBox.setValue(data.sites[0].suggested_price)
         self.spinBox.setSingleStep(5000)
