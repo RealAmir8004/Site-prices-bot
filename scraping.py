@@ -148,27 +148,9 @@ def scrap (data_name,data_id):
         with  open("TorobResult3.html" , "w" , encoding='utf-8') as file  : #tst
             file.write(soup.prettify())
 
-        buy_box : Tag= soup.find('div', class_='Showcase_buy_box__q4cpD') # class = Showcase_buy_box__q4cpD # badge =.Showcase_guarantee_badge_text__Kz3AW
-    # code : age buy_box bdard nemikhord
-    #   buy_box = olaviat ydone  badish jaygozin she 
-        if not buy_box:
-            print("Buy box not found on the page.")
-            return []
         badged_sites , unbadged_sites = get_all_sites(soup) # sites  = all sites 
-        try:
-            box_name , box_price = buy_box.find_all('div' , class_='Showcase_buy_box_text__otYW_ Showcase_ellipsis__FxqVh')  
-            box = Site(
-                box_name.get_text(strip=True)[8:],
-                int(''.join(filter(str.isdigit, box_price.get_text(strip=True))))
-            )
-            if box.name in [site.name for site in badged_sites]: # ckeck if guarantee_badge !!!!!!!!! mohem : in behtarin halate  bekhate algoritm buy_box torob
-                box.badged = True
-            print(f"buy box = {box.price}", end=" ") #tst
-        except Exception as e:
-            print(f"Error extracting buy box info: {e}")
-            return []
         sites = sorted(badged_sites + unbadged_sites)
-        sites.insert(0, box)
+        
         return sites
     except Exception as e:
         print(f"Error in scrap(): {e}")
