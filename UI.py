@@ -201,7 +201,10 @@ class MainApp(QMainWindow, Ui_MainWindow):
             getattr(self, f"label_{i}0").setStyleSheet(bg_color)
             getattr(self, f"radioButton_{i}").setStyleSheet(bg_color)
 
-        self.spinBox.setValue(data.sites[0].suggested_price)
+        if isinstance(data.sites[0].suggested_price, str): # if site[0] == spark
+            self.spinBox.setValue(data.sites[1].suggested_price)
+        else:
+            self.spinBox.setValue(data.sites[0].suggested_price)
         self.spinBox.setSingleStep(5000)
 
     @pyqtSlot()

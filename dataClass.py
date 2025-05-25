@@ -23,7 +23,7 @@ class Data :
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
         sites = scrap(self.name ,self.id)
         for site in sites[:RESULTS-1]:
-            if None in site.name:
+            if not site.name:
                 self.sites = sites[:RESULTS]
                 break
         else:
@@ -80,7 +80,7 @@ class CsvData :
             print(f"Unexpected error during CSV loading: {e}")
 
     def current(self)-> Data :
-            return self.__list_data[self.__index]
+        return self.__list_data[self.__index]
 
 
     def showData(self , is_next : bool) -> Data:

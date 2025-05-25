@@ -106,10 +106,10 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
     unbadged_sites = []
     try:
        with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
-            for product in products[:RESULTS-2]: # 2 = 1(buy-box ) + 1 ((may be)old price)
+            for product in products: # 2 = 1(buy-box ) + 1 ((may be)old price)
                 shop = product.get('shop_name', '')
                 try:
-                    if product.get('availability') and not product.get('is_adv', False):
+                    if product.get('availability') and not product.get('is_adv', False): # lookslike is_adv=true will have dupicate so this condition neccecery for delte one of them 
                         price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
                         badged = product.get('is_filtered_by_warranty', False)
                         if "اسپارک" in shop :
