@@ -4,7 +4,9 @@ from PyQt5.QtCore import pyqtSlot , pyqtSignal
 from dataClass import Data
 from dataClass import Site
 from constants import RESULTS
+from import_logging import get_logger
 
+logger = get_logger(__name__)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -183,13 +185,14 @@ class MainApp(QMainWindow, Ui_MainWindow):
     @pyqtSlot(Data)
     def update_table(self , data : Data):
         if data is None:
-            print("No data to display.")
+            logger.warning("No data to display.")
             return
-        if not data.sites or len(data.sites) < RESULTS-1:
-            print("Error: Data sites are not properly populated.")
+        if not data.sites or len(data.sites) < RESULTS-1: #fix latar
+            logger.error("Data sites are not properly populated.")
+            logger.error(f"len data.sites = {len(data.sites)}")
             return
         
-        print(f"Updating UI with Data: {data.id}, Sites:")
+        logger.info(f"Updating UI with Data: id='{data.id}'")
         self.label_productName.setText(data.name)
 
         for i, site in enumerate(data.sites):  
@@ -213,7 +216,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot()
     def save_clicked(self):
-        print("Save button clicked!")
+        logger.info("Save button clicked!")
 
 if __name__ == "__main__" :
     import sys

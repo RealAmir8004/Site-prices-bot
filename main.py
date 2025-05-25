@@ -3,7 +3,10 @@ from UI import MainApp
 import sys
 from dataClass import CsvData
 from scraping import Site
+from import_logging import get_logger
 # RESULTS defined in constants.py
+
+logger = get_logger(__name__)
 
 class MainController:
     def __init__(self):
@@ -19,16 +22,13 @@ class MainController:
 
     def handle_next_button(self):
         checked_button = self.ui_window.radioButtonGroup.checkedButton()
-        
+
         current_data = self.csv_list.current()
-        if current_data is None or not current_data.sites:
-            print("No data available or sites are not populated!")
-            return
 
         chosen_one = None
 
         if checked_button is None:
-            print("No option selected!")
+            logger.warning("Next clicked ->checked radio = None")
             return
         elif checked_button == self.ui_window.radioButton_0:
             chosen_one = current_data.sites[0]
@@ -45,12 +45,14 @@ class MainController:
         elif checked_button == self.ui_window.radioButton_6:
             chosen_one = Site("Custom", self.ui_window.spinBox.value())
 
+        logger.debug(f"Next clicked ->checked radio = {chosen_one}")
+
         current_data.chose_site(chosen_one)
 
         self.ui_window.dataChanged.emit(self.csv_list.showData(True))
 
     def handle_save_button(self):
-        print("saved")
+        logger.debug("Save button clicked!")
 
     def run(self):
         self.ui_window.show()
@@ -58,6 +60,9 @@ class MainController:
 
 
 if __name__ == "__main__":
+    with open("app.log", "a", encoding="utf-8") as f:
+        f.write("--------------------------------------------------------------------------------------------------------------\n")
+    logger.info("Starting MainController")
     controller = MainController()
     controller.run()
 

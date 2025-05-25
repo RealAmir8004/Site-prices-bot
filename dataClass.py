@@ -4,6 +4,9 @@ from pathlib import Path
 from scraping import scrap , Site
 from constants import RESULTS
 import bisect
+from import_logging import get_logger
+
+logger = get_logger(__name__)
 
 class Data :
     def __init__(self,id,picture,name,code,group,price,price_tax,number,active) : 
@@ -21,6 +24,7 @@ class Data :
 
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
+        logger.info(f"Updating product: id='{self.id}'")
         sites = scrap(self.name ,self.id)
         for site in sites[:RESULTS-1]:
             if not site.name:
@@ -29,6 +33,8 @@ class Data :
         else:
             self.sites= sites[:RESULTS-1]
             bisect.insort(self.sites , Site(None, self.price , suggest_price=False))
+        
+        logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
         # #tst
         # self.sites = [
@@ -41,6 +47,7 @@ class Data :
 
     def chose_site (self , ch : Site) :
         self.chosen_site = ch
+        logger.debug("chosen site saved in Data->self (RAM)")
 
 class CsvData :
     """
@@ -57,10 +64,10 @@ class CsvData :
 
             files = list(csvFolder.glob("*.csv"))
             if not files:
-                print("Error: No CSV files found in the specified folder.")
+                logger.error("No CSV files found in the specified folder.")
                 return
             csv_file_path = files[0]
-
+            logger.info(f"Using CSV file: {csv_file_path}")
 
             # reading csv file
             with open(csv_file_path, 'r' , encoding='utf-8') as csvfile:
@@ -72,12 +79,13 @@ class CsvData :
                         # if not bool(int(line[8])): # False == active # fix 
                         if int(line[0]) in [14,18,23,32,33,41,63,64] :
                             self.__list_data.append(Data(line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8]))
-                    except Exception as e:
-                        print(f"Error parsing line {line}: {e}")
+                            logger.debug(f"Data adedd to list: {line}")
+                    except Exception :
+                        logger.exception(f"Error parsing line ")
         except FileNotFoundError:
-            print(f"Error: File {csv_file_path} not found.")
-        except Exception as e:
-            print(f"Unexpected error during CSV loading: {e}")
+            logger.error(f"File {csv_file_path} not found.")
+        except Exception :
+            logger.exception(f"Unexpected error during CSV loading: ")
 
     def current(self)-> Data :
         return self.__list_data[self.__index]
@@ -91,13 +99,13 @@ class CsvData :
             else :    
                 self.__index -= 1
             curr = self.current()
+            logger.info(f"Current index of list: {self.__index} --refers to id='{curr.id}'")
             if curr.sites is None:
                 curr.update()
-            print(f"showing Data object: {curr.id}")
             return curr
         except IndexError:
-            print("No more data available.")
+            logger.warning("No more data available.")
             return None  # Return None if the list is exhausted
-        except Exception as e:
-            print(f"Unexpected error in showData: {e}")
+        except Exception :
+            logger.exception(f"Unexpected error in showData: ")
             return None

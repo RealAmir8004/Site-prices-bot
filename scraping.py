@@ -5,26 +5,29 @@ from json import loads
 from bs4.element import Tag 
 
 from constants import RESULTS , RESULTS_NUM
+from import_logging import get_logger
+
+logger = get_logger(__name__)
 
 def search_google (data_name ,data_id):
-    print("searching google for ", data_id, ":")
     try:
         from googlesearch import search
         import re
         query = data_name
         targets = []
         target_pattern = r"https://torob.com/"
-        with open("searchResult_ME.txt","w") as file: #tst
-            for result in search(query , RESULTS_NUM):
-                file.write(f"\n{result}\n")
-                if re.match(target_pattern,result):
-                    targets.append( result)
-        
-        print("prinring all search results (first url will be used) :")
-        print(targets)
+        search_results = search(query , RESULTS_NUM)
+        for result in search_results:
+            if re.match(target_pattern,result):
+                targets.append( result)
+        if not targets:
+            logger.warning(f"not any torob found in first {RESULTS_NUM}-- results of google: {search_results}")
+            return []
+
+        logger.debug(f"Google torob search result(s): {targets}")
         return targets
-    except Exception as e:
-        print(f"Error during Google search: {e}")
+    except Exception :
+        logger.exception(f"Error during Google search:")
         return []
 
 from selenium import webdriver
@@ -41,9 +44,10 @@ def get_html(url: str):
         time.sleep(2)  # Give page time to load after CAPTCHA
         html = driver.page_source
         driver.quit()
-        # Mimic requests.Response for compatibility
+        logger.debug(f'request Successed! no exception with url: {url}')
         return html.encode('utf-8')
     except Exception:
+        logger.exception(f'some error occurred in requesting: ')
         return None
 class Site :
     def __init__(self , shop_name  , price : int , badged : bool = False , suggest_price : bool = True) :
@@ -56,6 +60,10 @@ class Site :
         else:
             self.suggested_price = "dont change price"
         
+    def __repr__(self):
+        return (f"Site(name={self.name!r}, price={self.price}, "
+                f"badged={self.badged}, suggested_price={self.suggested_price!r})")
+
     def __lt__(self, other):  # Define sorting rule = buy-box of Torob priority rule 
         if self.badged == other.badged:
             return self.price < other.price
@@ -91,44 +99,39 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
     try:
         script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
         if not script_tag or not script_tag.string:
-            print("Could not find the required script tag for product data.")
+            logger.error("Could not find the required script tag for product data.")
             return [], []
         json_data = loads(script_tag.string)  
 
-        with open("test_data.json", "w", encoding="utf-8") as j: #tst
-            json.dump(json_data, j, ensure_ascii=False, indent=4)
-    
         products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
-    except Exception as e:
-        print(f"Error parsing product data: {e}")
+    
+    except Exception :
+        logger.exception(f"Error parsing product data ")
         return [], []
 
     # (info@) 
     badged_sites = []
     unbadged_sites = []
     try:
-       with open("other_sites.txt" , "w" , encoding='utf-8')as f : #tst (not all of down)
-            for product in products: # 2 = 1(buy-box ) + 1 ((may be)old price)
-                shop = product.get('shop_name', '')
-                try:
-                    if product.get('availability') and not product.get('is_adv', False): # lookslike is_adv=true will have dupicate so this condition neccecery for delte one of them 
-                        price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
-                        badged = product.get('is_filtered_by_warranty', False)
-                        if "اسپارک" in shop :
-                            badged_sites.append(Site(None, price, True, False ))  
-                            continue
-                        if badged :
-                            badged_sites.append(Site(shop  , price, True ))  
-                        else:
-                            unbadged_sites.append(Site(shop  , price , False ))                   
-
-                        f.write(f"------{shop} ----------- {product.get('price_text', '')}  \n") # tst
+        for product in products: # 2 = 1(buy-box ) + 1 ((may be)old price)
+            shop = product.get('shop_name', '')
+            try:
+                if product.get('availability') and not product.get('is_adv', False): # lookslike is_adv=true will have dupicate so this condition neccecery for delte one of them 
+                    price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
+                    badged = product.get('is_filtered_by_warranty', False)
+                    if "اسپارک" in shop :
+                        badged_sites.append(Site(None, price, True, False ))  
+                        continue
+                    if badged :
+                        badged_sites.append(Site(shop  , price, True ))  
                     else:
-                        f.write(f"{shop} ----------- {product.get('price_text', '')} \n") # tst
-                except Exception as e:
-                    print(f"Error processing product {shop}: {e}")
-    except Exception as e:
-        print(f"Error writing to other_sites.txt: {e}")
+                        unbadged_sites.append(Site(shop  , price , False ))                   
+            except Exception :
+                logger.exception(f"Error processing product {shop} : ")
+    except Exception :
+        logger.exception(f"Error writing to other_sites.txt: ")
+    logger.debug(f"Badged sites (len:{len(badged_sites)}): {badged_sites}")
+    logger.debug(f"Unbadged sites (len:{len(unbadged_sites)}): {unbadged_sites}")
     return badged_sites , unbadged_sites 
 
     
@@ -138,24 +141,24 @@ def scrap (data_name,data_id):
     try:
         results = search_google(data_name ,data_id)
         if not results:
-            print("No search results found.")
             return []
-        print("searching torob :")
+        logger.info(f"requesting torob at url={results[0]}")
         response = get_html(results[0]) # targets[0] = first torob result(url)
         if response is None:
-            print("Failed to fetch Torob page.")
+            logger.error("Failed to fetch Torob page.")
             return []
-        soup = BeautifulSoup(response.content , "html5lib")    
+        soup = BeautifulSoup(response , "html5lib")    
 
-        with  open("TorobResult3.html" , "w" , encoding='utf-8') as file  : #tst
-            file.write(soup.prettify())
-
-        badged_sites , unbadged_sites = get_all_sites(soup) # sites  = all sites 
+        badged_sites , unbadged_sites = get_all_sites(soup) 
         sites = sorted(badged_sites + unbadged_sites)
         
+        logger.info(f"Final sites list(len:{len(sites)}): {sites}")
         return sites
-    except Exception as e:
-        print(f"Error in scrap(): {e}")
+        # fix in new version if needed  :
+        # code : age sites[0] bdard nemikhord
+        #   sites[0] = sites[1] 
+    except Exception :
+        logger.exception(f"Error in scrap():")
         return []
     # fix : aya "sites" ke dare kharej mishe be tartibe gheymate ? ---- bayad be tartib gheymat bashe ta algorithm man dorost kar kne
 
