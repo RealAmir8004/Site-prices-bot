@@ -27,22 +27,24 @@ def search_google (data_name ,data_id):
         print(f"Error during Google search: {e}")
         return []
 
-def get_html(url : str ) -> requests.Response:
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+import time
+
+def get_html(url: str):
     try:
-        response = requests.get(url=url , headers=headers)
-        response.raise_for_status()
-    except HTTPError as err:
-        print(f'HTTP error occurred: {err}')  
+        options = Options()
+        options.headless = False  # Show browser so you can solve CAPTCHA
+        driver = webdriver.Firefox(options=options)
+        driver.get(url)
+        input("If you see a CAPTCHA, solve it in the browser, then press Enter here...")
+        time.sleep(2)  # Give page time to load after CAPTCHA
+        html = driver.page_source
+        driver.quit()
+        # Mimic requests.Response for compatibility
+        return html.encode('utf-8')
+    except Exception:
         return None
-    except Exception as err:
-        print(f'Other error occurred: {err}') 
-        return None
-    else:
-        print('Success! no expection with url : ' ,response.url) 
-        return response
-
-
 class Site :
     def __init__(self , shop_name  , price : int , badged : bool = False , suggest_price : bool = True) :
         """if Site.name is spark->suggest_price must be False """
