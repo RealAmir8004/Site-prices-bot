@@ -177,9 +177,9 @@ class MainApp(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setup_connections()
+        self.__setup_connections()
 
-    def setup_connections(self):
+    def __setup_connections(self):
         self.dataChanged.connect(self.update_table) 
 
     @pyqtSlot(Data)
@@ -187,7 +187,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         if data is None:
             logger.warning("No data to display.")
             return
-        if not data.sites or len(data.sites) < RESULTS-1: #fix latar
+        if not data.sites or len(data.sites) < RESULTS: 
             logger.error("Data sites are not properly populated.")
             logger.error(f"len data.sites = {len(data.sites)}")
             return
@@ -196,10 +196,17 @@ class MainApp(QMainWindow, Ui_MainWindow):
         self.label_productName.setText(data.name)
 
         for i, site in enumerate(data.sites):  
-            bg_color ="background-color: green;" if site.name is None else "background-color: red;" if site.badged  else "background-color: white;"
-            getattr(self, f"label_{i}").setText(site.name)
-            getattr(self, f"label_{i}0").setText(str(site.price))
-            getattr(self, f"radioButton_{i}").setText(str(site.suggested_price))
+            bg_color ="background-color: green;" if site.name == "oldSP" else "background-color: red;" if site.badged  else "background-color: white;"
+            if site.price == 0 :
+                getattr(self, f"label_{i}").setText('')
+                getattr(self, f"label_{i}0").setText('')
+                getattr(self, f"radioButton_{i}").setText('')
+                getattr(self, f"radioButton_{i}").setEnabled(False)
+            else :
+                getattr(self, f"label_{i}").setText(site.name)
+                getattr(self, f"label_{i}0").setText(str(site.price))
+                getattr(self, f"radioButton_{i}").setText(str(site.suggested_price))
+                getattr(self, f"radioButton_{i}").setEnabled(True)
             getattr(self, f"label_{i}").setStyleSheet(bg_color)
             getattr(self, f"label_{i}0").setStyleSheet(bg_color)
             getattr(self, f"radioButton_{i}").setStyleSheet(bg_color)

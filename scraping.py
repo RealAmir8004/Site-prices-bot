@@ -40,7 +40,7 @@ def get_html(url: str):
         options.headless = False  # Show browser so you can solve CAPTCHA
         driver = webdriver.Firefox(options=options)
         driver.get(url)
-        input("If you see a CAPTCHA, solve it in the browser, then press Enter here...")
+        # input("If you see a CAPTCHA, solve it in the browser, then press Enter here...")
         time.sleep(2)  # Give page time to load after CAPTCHA
         html = driver.page_source
         driver.quit()
@@ -93,8 +93,6 @@ class Site :
 # (info@) : rah haye mokhtalefi baraye sort bodan  list ha hast 
     # 1 - if : product['is_adv']  delete konim -> list ha khodeshon sort shode mian biron (vali ye data hazf mishe) 
     # 2 - sortedList
-from sortedcontainers import SortedList
-import json # tst 
 def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site]]: 
     try:
         script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
@@ -120,7 +118,7 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
                     price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
                     badged = product.get('is_filtered_by_warranty', False)
                     if "اسپارک" in shop :
-                        badged_sites.append(Site(None, price, True, False ))  
+                        badged_sites.append(Site("oldSP", price, True, False ))  
                         continue
                     if badged :
                         badged_sites.append(Site(shop  , price, True ))  
@@ -160,6 +158,5 @@ def scrap (data_name,data_id):
     except Exception :
         logger.exception(f"Error in scrap():")
         return []
-    # fix : aya "sites" ke dare kharej mishe be tartibe gheymate ? ---- bayad be tartib gheymat bashe ta algorithm man dorost kar kne
 
     # return  badged_sites , unbadged_sites ,  sites , box  # age badged_sites , unbadged_sites  mikhaym 

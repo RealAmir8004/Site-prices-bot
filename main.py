@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication , QMessageBox
 from UI import MainApp
 import sys
 from dataClass import CsvData
@@ -9,16 +9,20 @@ from import_logging import get_logger
 logger = get_logger(__name__)
 
 class MainController:
-    def __init__(self):
-        self.csv_list = CsvData()
+    def __init__(self): # ina ghable run shoden ui anjam mishan
         self.app = QApplication(sys.argv)
         self.ui_window = MainApp()
-
-        self.ui_window.update_table(self.csv_list.showData(True))
+        try:
+            self.csv_list = CsvData()
+        except Exception as e:
+            QMessageBox.critical(self.ui_window, "Error", str(e))
+            sys.exit(1)
 
         self.ui_window.nextButton.clicked.connect(self.handle_next_button)
         self.ui_window.backButton.clicked.connect(lambda: self.ui_window.dataChanged.emit(self.csv_list.showData(False)))
         self.ui_window.saveButton.clicked.connect(self.handle_save_button)
+        
+        self.ui_window.update_table(self.csv_list.showData(True))
 
     def handle_next_button(self):
         checked_button = self.ui_window.radioButtonGroup.checkedButton()
@@ -29,6 +33,7 @@ class MainController:
 
         if checked_button is None:
             logger.warning("Next clicked ->checked radio = None")
+            QMessageBox.critical(self.ui_window, "warning", "No Option selected")
             return
         elif checked_button == self.ui_window.radioButton_0:
             chosen_one = current_data.sites[0]
@@ -50,6 +55,11 @@ class MainController:
         current_data.chose_site(chosen_one)
 
         self.ui_window.dataChanged.emit(self.csv_list.showData(True))
+        
+        self.ui_window.radioButtonGroup.setExclusive(False)
+        checked_button.setChecked(False) # Uncheck  selected radio button for next data
+        self.ui_window.radioButtonGroup.setExclusive(True)
+
 
     def handle_save_button(self):
         logger.debug("Save button clicked!")

@@ -25,15 +25,19 @@ class Data :
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
         logger.info(f"Updating product: id='{self.id}'")
-        sites = scrap(self.name ,self.id)
+        sites = scrap(self.name ,self.id) 
+        
         for site in sites[:RESULTS-1]:
-            if not site.name:
+            if "oldSP" == site.name:
                 self.sites = sites[:RESULTS]
                 break
         else:
             self.sites= sites[:RESULTS-1]
-            bisect.insort(self.sites , Site(None, self.price , suggest_price=False))
-        
+            bisect.insort(self.sites , Site("oldSP", self.price , suggest_price=False))
+
+        while len(self.sites) < RESULTS:
+            self.sites.append(Site(shop_name=None , price=0, badged=False, suggest_price=False))
+
         logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
         # #tst
@@ -64,8 +68,8 @@ class CsvData :
 
             files = list(csvFolder.glob("*.csv"))
             if not files:
-                logger.error("No CSV files found in the specified folder.")
-                return
+                raise FileNotFoundError("No CSV files found in the specified folder.")                
+            
             csv_file_path = files[0]
             logger.info(f"Using CSV file: {csv_file_path}")
 
@@ -82,10 +86,9 @@ class CsvData :
                             logger.debug(f"Data adedd to list: {line}")
                     except Exception :
                         logger.exception(f"Error parsing line ")
-        except FileNotFoundError:
-            logger.error(f"File {csv_file_path} not found.")
-        except Exception :
-            logger.exception(f"Unexpected error during CSV loading: ")
+        except Exception as e :
+            logger.exception(f"error during CSV loading: ")
+            raise
 
     def current(self)-> Data :
         return self.__list_data[self.__index]
