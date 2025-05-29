@@ -49,9 +49,6 @@ class Data :
         #     Site(shop_name=f"Shop E ({self.name[-3:]})", price=self.price * 1.5, badged=self.price_tax > 5000),
         # ]
 
-    def chose_site (self , ch : Site) :
-        self.chosen_site = ch
-        logger.debug("chosen site saved in Data->self (RAM)")
 
 class CsvData :
     """

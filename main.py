@@ -19,15 +19,13 @@ class MainController:
             sys.exit(1)
 
         self.ui_window.nextButton.clicked.connect(self.handle_next_button)
-        self.ui_window.backButton.clicked.connect(lambda: self.ui_window.dataChanged.emit(self.csv_list.showData(False)))
+        self.ui_window.backButton.clicked.connect(self.handle_back_button)
         self.ui_window.saveButton.clicked.connect(self.handle_save_button)
         
         self.ui_window.update_table(self.csv_list.showData(True))
 
     def handle_next_button(self):
         checked_button = self.ui_window.radioButtonGroup.checkedButton()
-
-        current_data = self.csv_list.current()
 
         chosen_one = None
 
@@ -36,33 +34,33 @@ class MainController:
             QMessageBox.critical(self.ui_window, "warning", "No Option selected")
             return
         elif checked_button == self.ui_window.radioButton_0:
-            chosen_one = current_data.sites[0]
+            chosen_one = "radioButton_0"
         elif checked_button == self.ui_window.radioButton_1:
-            chosen_one = current_data.sites[1]
+            chosen_one = "radioButton_1"
         elif checked_button == self.ui_window.radioButton_2:
-            chosen_one = current_data.sites[2]
+            chosen_one = "radioButton_2"
         elif checked_button == self.ui_window.radioButton_3:
-            chosen_one = current_data.sites[3]
+            chosen_one = "radioButton_3"
         elif checked_button == self.ui_window.radioButton_4:
-            chosen_one = current_data.sites[4]
+            chosen_one = "radioButton_4"
         elif checked_button == self.ui_window.radioButton_5:
-            chosen_one = current_data.sites[5]
+            chosen_one = "radioButton_5"
         elif checked_button == self.ui_window.radioButton_6:
-            chosen_one = Site("Custom", self.ui_window.spinBox.value())
+            self.ui_window.spinBox.interpretText()
+            chosen_one = self.ui_window.spinBox.value()
 
+        self.csv_list.current().chosen_site = chosen_one
         logger.debug(f"Next clicked ->checked radio = {chosen_one}")
 
-        current_data.chose_site(chosen_one)
-
         self.ui_window.dataChanged.emit(self.csv_list.showData(True))
-        
-        self.ui_window.radioButtonGroup.setExclusive(False)
-        checked_button.setChecked(False) # Uncheck  selected radio button for next data
-        self.ui_window.radioButtonGroup.setExclusive(True)
 
 
     def handle_save_button(self):
         logger.debug("Save button clicked!")
+
+    def handle_back_button(self):
+        logger.debug(f"Back clicked ") 
+        self.ui_window.dataChanged.emit(self.csv_list.showData(False))
 
     def run(self):
         self.ui_window.show()

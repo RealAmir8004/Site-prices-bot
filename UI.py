@@ -216,6 +216,24 @@ class MainApp(QMainWindow, Ui_MainWindow):
         else:
             self.spinBox.setValue(data.sites[0].suggested_price)
         self.spinBox.setSingleStep(5000)
+        self.__set_radio_checked(data)
+
+    def __set_radio_checked(self , data):
+        chosen = data.chosen_site
+        if chosen is None :
+            checked = self.radioButtonGroup.checkedButton()
+            if checked is not None:
+                self.radioButtonGroup.setExclusive(False)
+                checked.setChecked(False)
+                self.radioButtonGroup.setExclusive(True)
+        else :
+            logger.debug(f"checking radio_checked from data (ram) = {chosen} ")
+            if isinstance(chosen, str): #radioButton_1...5
+                getattr(self,chosen).setChecked(True)
+            else : #radioButton_6
+                self.radioButton_6.setChecked(True)
+                self.spinBox.setValue(chosen)  
+
 
     @pyqtSlot()
     def back_clicked(self):
