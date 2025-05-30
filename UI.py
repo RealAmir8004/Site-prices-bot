@@ -8,6 +8,11 @@ from import_logging import get_logger
 
 logger = get_logger(__name__)
 
+# WARNING: Do not do any update in Ui_MainWindow class 
+# Ui_MainWindow exacly copyd from .py file created by qt designer ( PyQt5 UI code generator 5.15.11)
+# only change Ui_MainWindow in qt designer (create a versionN.ui )
+
+# generated from reading ui file 'version2.ui'
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -42,6 +47,7 @@ class Ui_MainWindow(object):
         self.spinBox.setMinimumSize(QtCore.QSize(131, 20))
         self.spinBox.setMaximumSize(QtCore.QSize(131, 20))
         self.spinBox.setObjectName("spinBox")
+        self.spinBox.setSingleStep(5000)
         self.spinBox.setMaximum(999999999)  
         self.spinBox.setMinimum(10000)
         self.gridLayout.addWidget(self.splitter, 6, 3, 1, 1)
@@ -215,7 +221,6 @@ class MainApp(QMainWindow, Ui_MainWindow):
             self.spinBox.setValue(data.sites[1].suggested_price)
         else:
             self.spinBox.setValue(data.sites[0].suggested_price)
-        self.spinBox.setSingleStep(5000)
         self.__set_radio_checked(data)
 
     def __set_radio_checked(self , data):

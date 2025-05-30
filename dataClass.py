@@ -77,8 +77,8 @@ class CsvData :
                 next(csvreader)
                 for line in csvreader:
                     try:
-                        # if not bool(int(line[8])): # False == active # fix 
-                        if int(line[0]) in [14,18,23,32,33,41,63,64] :
+                        # if not bool(int(line[8])): # False == active # fix: commented because of tst
+                        if int(line[0]) in [14,18,23,32,33,41,63,64] : #tst
                             self.__list_data.append(Data(line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8]))
                             logger.debug(f"Data adedd to list: {line}")
                     except Exception :
