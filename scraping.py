@@ -9,7 +9,7 @@ from import_logging import get_logger
 
 logger = get_logger(__name__)
 
-def search_google (data_name ,data_id):
+def search_google (data_name):
     try:
         from googlesearch import search
         import re
@@ -134,10 +134,10 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
 
     
 
-def scrap (data_name,data_id):
+def scrap (data_name):
     """ search torob for a product and return buy-box and 'RESULTS' of sites in 'Site' object arranged by priority """
     try:
-        results = search_google(data_name ,data_id)
+        results = search_google(data_name)
         if not results:
             return []
         logger.info(f"requesting torob at url={results[0]}")
