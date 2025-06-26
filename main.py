@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QApplication , QMessageBox
 from UI import MainApp
 import sys
-from dataClass import CsvData
+from dataClass import DataList
 from scraping import Site
 from import_logging import get_logger
 # RESULTS defined in constants.py
@@ -13,7 +13,7 @@ class MainController:
         self.app = QApplication(sys.argv)
         self.ui_window = MainApp()
         try:
-            self.csv_list = CsvData()
+            self.data_list = DataList()
         except Exception as e:
             QMessageBox.critical(self.ui_window, "Error", str(e))
             sys.exit(1)
@@ -22,7 +22,7 @@ class MainController:
         self.ui_window.backButton.clicked.connect(self.handle_back_button)
         self.ui_window.saveButton.clicked.connect(self.handle_save_button)
         
-        self.ui_window.update_table(self.csv_list.showData(True))
+        self.ui_window.update_table(self.data_list.showData(True))
 
     def handle_next_button(self):
         checked_button = self.ui_window.radioButtonGroup.checkedButton()
@@ -49,10 +49,10 @@ class MainController:
             self.ui_window.spinBox.interpretText()
             chosen_one = self.ui_window.spinBox.value()
 
-        self.csv_list.current().chosen_site = chosen_one
+        self.data_list.current().chosen_site = chosen_one
         logger.debug(f"Next clicked ->checked radio = {chosen_one}")
 
-        self.ui_window.dataChanged.emit(self.csv_list.showData(True))
+        self.ui_window.dataChanged.emit(self.data_list.showData(True))
 
 
     def handle_save_button(self):
@@ -60,7 +60,7 @@ class MainController:
 
     def handle_back_button(self):
         logger.debug(f"Back clicked ") 
-        self.ui_window.dataChanged.emit(self.csv_list.showData(False))
+        self.ui_window.dataChanged.emit(self.data_list.showData(False))
 
     def run(self):
         self.ui_window.show()
