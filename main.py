@@ -34,17 +34,17 @@ class MainController:
             QMessageBox.critical(self.ui_window, "warning", "No Option selected")
             return
         elif checked_button == self.ui_window.radioButton_0:
-            chosen_one = "radioButton_0"
+            chosen_one = "0"
         elif checked_button == self.ui_window.radioButton_1:
-            chosen_one = "radioButton_1"
+            chosen_one = "1"
         elif checked_button == self.ui_window.radioButton_2:
-            chosen_one = "radioButton_2"
+            chosen_one = "2"
         elif checked_button == self.ui_window.radioButton_3:
-            chosen_one = "radioButton_3"
+            chosen_one = "3"
         elif checked_button == self.ui_window.radioButton_4:
-            chosen_one = "radioButton_4"
+            chosen_one = "4"
         elif checked_button == self.ui_window.radioButton_5:
-            chosen_one = "radioButton_5"
+            chosen_one = "5"
         elif checked_button == self.ui_window.radioButton_6:
             self.ui_window.spinBox.interpretText()
             chosen_one = self.ui_window.spinBox.value()

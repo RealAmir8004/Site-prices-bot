@@ -233,8 +233,8 @@ class MainApp(QMainWindow, Ui_MainWindow):
                 self.radioButtonGroup.setExclusive(True)
         else :
             logger.debug(f"checking radio_checked from data (ram) = {chosen} ")
-            if isinstance(chosen, str): #radioButton_1...5
-                getattr(self,chosen).setChecked(True)
+            if isinstance(chosen, str): #radioButton_0...5
+                getattr(self, "radioButton_"+chosen).setChecked(True)
             else : #radioButton_6
                 self.radioButton_6.setChecked(True)
                 self.spinBox.setValue(chosen)  
