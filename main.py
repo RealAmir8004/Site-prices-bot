@@ -46,7 +46,10 @@ class MainController:
 
 
     def handle_save_button(self):
-        logger.debug("Save button clicked!")
+        """save all of changes maded untill now from memory to xlsx file"""
+        logger.info("Save clicked!")
+        self.data_list.saveData()
+        QMessageBox.critical(self.ui_window, "Info", "Saved successfully")
 
     def handle_back_button(self):
         """save changes to memory (if changed)and show previuos data"""
