@@ -198,7 +198,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
             logger.error(f"len data.sites = {len(data.sites)}")
             return
         
-        logger.info(f"Updating UI with Data: id='{data.id}'")
+        logger.info(f"Updating UI ...")
         self.label_productName.setText(data.name)
 
         for i, site in enumerate(data.sites):  

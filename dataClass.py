@@ -18,7 +18,7 @@ class Data :
 
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
-        logger.info(f"Updating product: id='{self.id}'")
+        logger.info("Scraping for product ...")
         # sites = scrap(self.name) 
         
         # for site in sites[:RESULTS-1]:
@@ -75,7 +75,6 @@ class DataList :
 
     def current(self)-> Data :
         return self.__list_data[self.__index]
-
 
     def showData(self , is_next : bool) -> Data:
         """This will go forward in the list and return the next Data object."""

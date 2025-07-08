@@ -25,33 +25,23 @@ class MainController:
         self.ui_window.update_table(self.data_list.showData(True))
 
     def handle_next_button(self):
+        """save changes to memory and show next data"""
         checked_button = self.ui_window.radioButtonGroup.checkedButton()
-
-        chosen_one = None
-
         if checked_button is None:
             logger.warning("Next clicked ->checked radio = None")
             QMessageBox.critical(self.ui_window, "warning", "No Option selected")
             return
-        elif checked_button == self.ui_window.radioButton_0:
-            chosen_one = "0"
-        elif checked_button == self.ui_window.radioButton_1:
-            chosen_one = "1"
-        elif checked_button == self.ui_window.radioButton_2:
-            chosen_one = "2"
-        elif checked_button == self.ui_window.radioButton_3:
-            chosen_one = "3"
-        elif checked_button == self.ui_window.radioButton_4:
-            chosen_one = "4"
-        elif checked_button == self.ui_window.radioButton_5:
-            chosen_one = "5"
-        elif checked_button == self.ui_window.radioButton_6:
+        checked_button = checked_button.objectName()[-1]
+        logger.debug(f"Next clicked ->checked radio = {checked_button}")
+        d = self.data_list.current()
+        if checked_button == '6' :
             self.ui_window.spinBox.interpretText()
-            chosen_one = self.ui_window.spinBox.value()
-
-        self.data_list.current().chosen_site = chosen_one
-        logger.debug(f"Next clicked ->checked radio = {chosen_one}")
-
+            d.chosen_site = self.ui_window.spinBox.value()
+            logger.info(f"price updated from ={d.price} to ={d.chosen_site}")  
+        else :# '1' , '2' , '3' , '4' , '5' 
+            d.chosen_site = checked_button
+            logger.info(f"price updated from ={d.price} to ={d.sites[int(d.chosen_site)]}")  
+        # show next data
         self.ui_window.dataChanged.emit(self.data_list.showData(True))
 
 
@@ -59,6 +49,7 @@ class MainController:
         logger.debug("Save button clicked!")
 
     def handle_back_button(self):
+        """save changes to memory (if changed)and show previuos data"""
         logger.debug(f"Back clicked ") 
         self.ui_window.dataChanged.emit(self.data_list.showData(False))
 
