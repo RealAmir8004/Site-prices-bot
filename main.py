@@ -40,7 +40,7 @@ class MainController:
             logger.info(f"price updated from ={d.price} to ={d.chosen_site}")  
         else :# '1' , '2' , '3' , '4' , '5' 
             d.chosen_site = checked_button
-            logger.info(f"price updated from ={d.price} to ={d.sites[int(d.chosen_site)]}")  
+            logger.info(f"price updated from ={d.price} to ={d.sites[int(d.chosen_site)].suggested_price}")  
         # show next data
         self.ui_window.dataChanged.emit(self.data_list.showData(True))
 

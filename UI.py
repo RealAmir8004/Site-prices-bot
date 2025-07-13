@@ -198,7 +198,6 @@ class MainApp(QMainWindow, Ui_MainWindow):
             logger.error(f"len data.sites = {len(data.sites)}")
             return
         
-        logger.info(f"Updating UI ...")
         self.label_productName.setText(data.name)
 
         for i, site in enumerate(data.sites):  
@@ -222,6 +221,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         else:
             self.spinBox.setValue(data.sites[0].suggested_price)
         self.__set_radio_checked(data)
+        logger.info(f"UI updated")
 
     def __set_radio_checked(self , data):
         chosen = data.chosen_site

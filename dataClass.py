@@ -111,9 +111,14 @@ class DataList :
         """Save all of changes maded untill now from memory to xlsx file"""
         try:
             df = pandas.read_excel(self.output_path)
+            # Original stats
+            len_original_rows = len(df)
+            len_original_ids = len(set(df["id_product"]))
             # Remove all active == 0 :
             inactive_ids = set(df.loc[df["active"] == 0, "id_product"])
-            df = df[~df["id_product"].isin(inactive_ids)]
+            inactive_rows = df[df["id_product"].isin(inactive_ids)]
+            df = df.drop(inactive_rows.index)
+            logger.info(f"Original file: {len_original_ids} ids in '{len_original_rows}' rows --> inactives (removed): '{len(inactive_ids)}' ids in '{len(inactive_rows)}' rows --> actives (remained): '{len(set(df["id_product"]))}' ids in '{len(df)}' rows")
             # filter unchangeds & include changes :
             new_rows = []
             data_map = {d.id: d for d in self.__list_data}
@@ -129,12 +134,14 @@ class DataList :
                 data = data_map.get(curr_id)
                 chosen = data.chosen_site
                 if chosen is None: # radio not checked before save button 
+                    logger.warning(f"id='{curr_id}' deleted from xlsx becuase: radio not checked before save button")
                     remain = False
                     continue  # Remove
                 row_dict = row._asdict()
                 if isinstance(chosen, str):
                     site = data.sites[int(chosen)]
                     if isinstance(site.suggested_price, str): # "dont change price"
+                        logger.debug(f"id='{curr_id}' deleted from xlsx becuase: radio = 'dont change price'")
                         remain = False
                         continue
                     updated_price = site.suggested_price
@@ -143,6 +150,7 @@ class DataList :
                 row_dict["price"] = updated_price 
                 remain = True
                 new_rows.append(row_dict)
+                logger.info(f"id='{curr_id}' remained in xlsx : price updated to {updated_price}")
             # Save (without extra changings (header style)) :
             wb = load_workbook(self.output_path)
             ws = wb.active
