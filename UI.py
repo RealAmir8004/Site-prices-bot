@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import pyqtSlot , pyqtSignal
+from PyQt5.QtCore import pyqtSlot , pyqtSignal , QLocale
 from dataClass import Data
 from dataClass import Site
 from constants import RESULTS
@@ -261,7 +261,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.__setup_connections()
-
+        self.local = QLocale()
     def __setup_connections(self):
         self.dataChanged.connect(self.update_table) 
 
@@ -279,15 +279,18 @@ class MainApp(QMainWindow, Ui_MainWindow):
 
         for i, site in enumerate(data.sites):  
             bg_color ="background-color: green;" if site.name == "oldSP" else "background-color: red;" if site.badged  else "background-color: white;"
-            if site.price == 0 :
+            if site.name == None :
                 getattr(self, f"label_{i}").setText('')
                 getattr(self, f"label_{i}0").setText('')
                 getattr(self, f"radioButton_{i}").setText('')
                 getattr(self, f"radioButton_{i}").setEnabled(False)
             else :
                 getattr(self, f"label_{i}").setText(site.name)
-                getattr(self, f"label_{i}0").setText(str(site.price))
-                getattr(self, f"radioButton_{i}").setText(str(site.suggested_price))
+                getattr(self, f"label_{i}0").setText(self.local.toString(site.price))
+                if bg_color =="background-color: green;" :# "oldSP" => suggested_price="dont change price" 
+                    getattr(self, f"radioButton_{i}").setText(site.suggested_price)
+                else :
+                    getattr(self, f"radioButton_{i}").setText(self.local.toString(site.suggested_price))
                 getattr(self, f"radioButton_{i}").setEnabled(True)
             getattr(self, f"label_{i}").setStyleSheet(bg_color)
             getattr(self, f"label_{i}0").setStyleSheet(bg_color)
