@@ -5,6 +5,8 @@ from dataClass import Data
 from dataClass import Site
 from constants import RESULTS
 from import_logging import get_logger
+import sys
+from PyQt5.QtWidgets import QApplication
 
 logger = get_logger(__name__)
 
@@ -268,15 +270,6 @@ class MainApp(QMainWindow, Ui_MainWindow):
     def set_len_list(self , give_me_len_list : int):
         self.len_list = give_me_len_list
 
-    def show_progress_dialog(self):
-        progress = QProgressDialog("Updating products...", "Cancel", 0, self.len_list, self)
-        progress.setWindowTitle("Please Wait")
-        progress.setWindowModality(QtCore.Qt.WindowModal)
-        progress.setMinimumDuration(0)
-        progress.setAutoClose(True)
-        progress.setAutoReset(True)
-        return progress
-
     @pyqtSlot(tuple)
     def update_table(self , tuple_of_dataIndex : tuple[Data , int]):
         data , index = tuple_of_dataIndex
@@ -333,6 +326,26 @@ class MainApp(QMainWindow, Ui_MainWindow):
                 self.spinBox.setValue(chosen)  
 
 
+class ProgressDialog(QProgressDialog):
+    def __init__(self,mainApp):
+        self.mainApp = mainApp
+        self.max = mainApp.len_list
+        super().__init__("Updating products...", "Cancel", 0, self.max, mainApp)
+        self.setWindowTitle("Please Wait")
+        self.setWindowModality(QtCore.Qt.WindowModal)
+        self.setMinimumDuration(0)
+        self.setAutoClose(True)
+        self.setAutoReset(True)
+    
+    def progress(self ,i) -> bool :
+        self.setLabelText(f"Updating item {i + 1} of {self.max}")
+        self.setValue(i + 1)
+        QApplication.processEvents()
+        if self.wasCanceled():
+            return True
+        return False
+
+
     @pyqtSlot()
     def back_clicked(self):
         pass
@@ -342,8 +355,6 @@ class MainApp(QMainWindow, Ui_MainWindow):
         logger.info("Save button clicked!")
 
 if __name__ == "__main__" :
-    import sys
-    from PyQt5.QtWidgets import QApplication
     app = QApplication(sys.argv)
     window = MainApp()
     window.show()

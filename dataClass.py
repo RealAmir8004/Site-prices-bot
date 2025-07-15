@@ -77,10 +77,10 @@ class DataList :
     def current(self)-> Data :
         return self.__list_data[self.__index]
     
-    def updateAll(self , proggres_function):
+    def updateAll(self , bar):
         for i, d in enumerate(self.__list_data):
             d.update()
-            canceled = proggres_function(i)
+            canceled = bar.progress(i)
             if canceled:
                 break
 
