@@ -76,7 +76,8 @@ class DataList :
             # filteering table to Only select "id_product", "name", "price" from "active" rows :
             filtered = df.loc[df["active"] == 1, ["id_product", "name", "price"]]
             self.__list_data = [Data(row.id_product, row.name, row.price) for row in filtered.itertuples()]
-            logger.debug("list_data exported from xlsx is = "+str([{'id': d.id, 'name': d.name, 'price': d.price} for d in self.__list_data])) 
+            self.len = len(self.__list_data)
+            logger.debug(f"list_data exported from xlsx is = (len= {self.len}) "+str([{'id': d.id, 'name': d.name, 'price': d.price} for d in self.__list_data])) 
             # fix (if later needed): we can use __repr__ in Data instead of prevous line 
         except StopIteration:
             logger.error("No xlsx files found in the input xlsx folder")
@@ -95,14 +96,15 @@ class DataList :
                 self.__index += 1
             else :    
                 self.__index -= 1
+            if self.__index < -self.len:
+                self.__index = self.len -1
+            elif self.__index >= self.len:
+                self.__index = 0
             curr = self.current()
             logger.info(f"Current index of list: {self.__index} --refers to id='{curr.id}'")
             if curr.sites is None:
                 curr.update()
-            return curr
-        except IndexError:
-            logger.warning("No more data available.")
-            return None  # Return None if the list is exhausted
+            return curr , self.__index
         except Exception :
             logger.exception(f"Unexpected error in showData: ")
             return None

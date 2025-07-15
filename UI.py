@@ -256,7 +256,7 @@ class Ui_MainWindow(object):
 
 
 class MainApp(QMainWindow, Ui_MainWindow):
-    dataChanged = pyqtSignal(Data)
+    dataChanged = pyqtSignal(tuple)
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -265,8 +265,12 @@ class MainApp(QMainWindow, Ui_MainWindow):
     def __setup_connections(self):
         self.dataChanged.connect(self.update_table) 
 
-    @pyqtSlot(Data)
-    def update_table(self , data : Data):
+    def set_len_list(self , give_me_len_list : int):
+        self.len_list = give_me_len_list
+
+    @pyqtSlot(tuple)
+    def update_table(self , tuple_of_dataIndex : tuple[Data , int]):
+        data , index = tuple_of_dataIndex
         if data is None:
             logger.warning("No data to display.")
             return
@@ -276,6 +280,9 @@ class MainApp(QMainWindow, Ui_MainWindow):
             return
         
         self.label_productName.setText(data.name)
+        if index < 0 :
+            index = self.len_list+index
+        self.label_productCount.setText(f"{index}/{self.len_list-1} → id={data.id}")
 
         for i, site in enumerate(data.sites):  
             bg_color ="background-color: green;" if site.name == "oldSP" else "background-color: red;" if site.badged  else "background-color: white;"

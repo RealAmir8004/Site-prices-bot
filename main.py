@@ -18,6 +18,8 @@ class MainController:
             QMessageBox.critical(self.ui_window, "Error", str(e))
             sys.exit(1)
 
+        self.ui_window.set_len_list(self.data_list.len)
+
         self.ui_window.nextButton.clicked.connect(self.handle_next_button)
         self.ui_window.backButton.clicked.connect(self.handle_back_button)
         self.ui_window.saveButton.clicked.connect(self.handle_save_button)
@@ -48,6 +50,7 @@ class MainController:
     def handle_save_button(self):
         """save all of changes maded untill now from memory to xlsx file"""
         logger.info("Save clicked!")
+        self.handle_next_button()
         self.data_list.saveData()
         QMessageBox.critical(self.ui_window, "Info", "Saved successfully")
 
