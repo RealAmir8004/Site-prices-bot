@@ -30,25 +30,28 @@ def search_google (data_name):
         logger.exception(f"Error during Google search:")
         return []
 
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-import time
+class RequestTorob :
+    _session = None  
+    
+    @classmethod
+    def _init_session(cls):
+        if cls._session is None :
+            cls._session = requests.Session()
+            cls._session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"})
+        
+    @classmethod
+    def get_html(cls , url):
+        cls._init_session()
+        try:
+            response = cls._session.get(url)
+            response.raise_for_status()
+            logger.debug(f'request Successed!')
+            return response
+        except Exception:
+            logger.exception(f'some error occurred in requesting: ')
+            return None
 
-def get_html(url: str):
-    try:
-        options = Options()
-        options.headless = False  # Show browser so you can solve CAPTCHA
-        driver = webdriver.Firefox(options=options)
-        driver.get(url)
-        # input("If you see a CAPTCHA, solve it in the browser, then press Enter here...")
-        time.sleep(2)  # Give page time to load after CAPTCHA
-        html = driver.page_source
-        driver.quit()
-        logger.debug(f'request Successed!')
-        return html.encode('utf-8')
-    except Exception:
-        logger.exception(f'some error occurred in requesting: ')
-        return None
+
 class Site :
     def __init__(self , shop_name  , price : int , badged : bool = False , suggest_price : bool = True) :
         """if Site.name is spark->suggest_price must be False """
@@ -141,11 +144,11 @@ def scrap (data_name):
         if not results:
             return []
         logger.info(f"requesting torob at url={results[0]}")
-        response = get_html(results[0]) # targets[0] = first torob result(url)
+        response = RequestTorob.get_html(results[0]) # targets[0] = first torob result(url)
         if response is None:
             logger.error("Failed to fetch Torob page.")
             return []
-        soup = BeautifulSoup(response , "html5lib")    
+        soup = BeautifulSoup(response.content , "html5lib")    
 
         badged_sites , unbadged_sites = get_all_sites(soup) 
         sites = sorted(badged_sites + unbadged_sites)

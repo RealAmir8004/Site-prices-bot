@@ -8,6 +8,8 @@ import shutil
 from os import chmod
 from  stat import S_IWRITE
 from openpyxl import load_workbook
+from time import sleep
+import random  
 
 logger = get_logger(__name__)
 
@@ -83,6 +85,7 @@ class DataList :
             canceled = bar.progress(i)
             if canceled:
                 break
+            sleep(random.uniform(2, 4))
 
     def showData(self , is_next : bool) -> Data:
         """This will go forward in the list and return the next Data object."""
