@@ -22,30 +22,18 @@ class Data :
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
         logger.info("Scraping for product ...")
-        # sites = scrap(self.name) 
+        sites = scrap(self.name) 
+        while len(sites) < RESULTS:
+            sites.append(Site(shop_name=None , price=0, badged=False, suggest_price=False))
         
-        # for site in sites[:RESULTS-1]:
-        #     if "oldSP" == site.name:
-        #         self.sites = sites[:RESULTS]
-        #         break
-        # else:
-        #     self.sites= sites[:RESULTS-1]
-        #     bisect.insort(self.sites , Site("oldSP", self.price , suggest_price=False))
-
-        # while len(self.sites) < RESULTS:
-        #     self.sites.append(Site(shop_name=None , price=0, badged=False, suggest_price=False))
-
-        # logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
-
-        #tst
-        self.sites = [
-            Site(shop_name=f"Shop A ({self.name[0:3]})", price=self.price, badged=len(self.name) % 2 == 0),
-            Site(shop_name="oldSP", price=self.price , badged=self.price > 100000 , suggest_price= False),
-            Site(shop_name=f"Shop B ({self.name[2:5]})", price=self.price * 1.2, badged=True),
-            Site(shop_name=f"Shop C ({self.name[2:5]})", price=self.price * 1.2, badged=False),
-            Site(shop_name=f"Shop D ({self.name[-4:]})", price=self.price * 1.1, badged=True),
-            Site(shop_name=f"Shop E ({self.name[-3:]})", price=self.price * 1.5, badged=False),
-        ]
+        for site in sites[:RESULTS-1]:
+            if "oldSP" == site.name:
+                self.sites = sites[:RESULTS]
+                break
+        else:
+            self.sites= sites[:RESULTS-1]
+            bisect.insort(self.sites , Site("oldSP", self.price , suggest_price=False))
+        logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
 
 class DataList :

@@ -44,7 +44,7 @@ def get_html(url: str):
         time.sleep(2)  # Give page time to load after CAPTCHA
         html = driver.page_source
         driver.quit()
-        logger.debug(f'request Successed! no exception with url: {url}')
+        logger.debug(f'request Successed!')
         return html.encode('utf-8')
     except Exception:
         logger.exception(f'some error occurred in requesting: ')
