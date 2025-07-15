@@ -289,6 +289,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
                 getattr(self, f"label_{i}0").setText(self.local.toString(site.price))
                 if bg_color =="background-color: green;" :# "oldSP" => suggested_price="dont change price" 
                     getattr(self, f"radioButton_{i}").setText(site.suggested_price)
+                    dont_radio = i
                 else :
                     getattr(self, f"radioButton_{i}").setText(self.local.toString(site.suggested_price))
                 getattr(self, f"radioButton_{i}").setEnabled(True)
@@ -300,17 +301,13 @@ class MainApp(QMainWindow, Ui_MainWindow):
             self.spinBox.setValue(data.sites[1].suggested_price)
         else:
             self.spinBox.setValue(data.sites[0].suggested_price)
-        self.__set_radio_checked(data)
+        self.__set_radio_checked(data,  dont_radio)
         logger.info(f"UI updated")
 
-    def __set_radio_checked(self , data):
+    def __set_radio_checked(self , data , dont_radio):
         chosen = data.chosen_site
         if chosen is None :
-            checked = self.radioButtonGroup.checkedButton()
-            if checked is not None:
-                self.radioButtonGroup.setExclusive(False)
-                checked.setChecked(False)
-                self.radioButtonGroup.setExclusive(True)
+            getattr(self, f"radioButton_{dont_radio}").setChecked(True)
         else :
             logger.debug(f"checking radio_checked from data (ram) = {chosen} ")
             if isinstance(chosen, str): #radioButton_0...5
