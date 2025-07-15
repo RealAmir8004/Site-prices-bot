@@ -20,6 +20,17 @@ class MainController:
 
         self.ui_window.set_len_list(self.data_list.len)
 
+        self.progress = self.ui_window.show_progress_dialog()
+        def proggres_function(i) -> bool :
+            self.progress.setValue(i + 1)
+            QApplication.processEvents()
+            if self.progress.wasCanceled():
+                return True
+            return False
+
+        self.data_list.updateAll(proggres_function)
+        del self.progress
+
         self.ui_window.nextButton.clicked.connect(self.handle_next_button)
         self.ui_window.backButton.clicked.connect(self.handle_back_button)
         self.ui_window.saveButton.clicked.connect(self.handle_save_button)

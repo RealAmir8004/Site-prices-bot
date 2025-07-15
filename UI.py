@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow , QProgressDialog
 from PyQt5.QtCore import pyqtSlot , pyqtSignal , QLocale
 from dataClass import Data
 from dataClass import Site
@@ -267,6 +267,15 @@ class MainApp(QMainWindow, Ui_MainWindow):
 
     def set_len_list(self , give_me_len_list : int):
         self.len_list = give_me_len_list
+
+    def show_progress_dialog(self):
+        progress = QProgressDialog("Updating products...", "Cancel", 0, self.len_list, self)
+        progress.setWindowTitle("Please Wait")
+        progress.setWindowModality(QtCore.Qt.WindowModal)
+        progress.setMinimumDuration(0)
+        progress.setAutoClose(True)
+        progress.setAutoReset(True)
+        return progress
 
     @pyqtSlot(tuple)
     def update_table(self , tuple_of_dataIndex : tuple[Data , int]):

@@ -76,6 +76,13 @@ class DataList :
 
     def current(self)-> Data :
         return self.__list_data[self.__index]
+    
+    def updateAll(self , proggres_function):
+        for i, d in enumerate(self.__list_data):
+            d.update()
+            canceled = proggres_function(i)
+            if canceled:
+                break
 
     def showData(self , is_next : bool) -> Data:
         """This will go forward in the list and return the next Data object."""
