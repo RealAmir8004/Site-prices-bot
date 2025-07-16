@@ -321,10 +321,10 @@ class MainApp(QMainWindow, Ui_MainWindow):
 
 class ProgressDialog(QProgressDialog):
     def __init__(self,mainApp):
-        self.mainApp = mainApp
         self.max = mainApp.len_list
         super().__init__("Updating products...", "Cancel", 0, self.max, mainApp)
         self.setWindowTitle("Please Wait")
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
         self.setWindowModality(QtCore.Qt.WindowModal)
         self.setMinimumDuration(0)
         self.setAutoClose(True)
