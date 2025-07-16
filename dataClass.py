@@ -63,8 +63,21 @@ class DataList :
 
             # reading xlsx file
             df = pandas.read_excel(xlsx_file_path)
+            
+            active_products = df.groupby("id_product")["active"].apply(lambda a: (a == 1).any())
+            active_products = active_products[active_products].index
+            df_active = df["id_product"].isin(active_products)
+
+            availables_products = df.groupby("id_product")["quantity"].apply(lambda q: (q > 0).any())
+            availables_products = availables_products[availables_products].index            
+            df_availables =df["id_product"].isin(availables_products)
+
+            logger.info(f"Original file: {len(set(df["id_product"]))} ids in '{len(df)}' rows --> actives : '{len(active_products)}' ids in '{df_active.sum()}' rows --> availables : '{len(availables_products)}' ids in '{df_availables.sum()}' rows ")
+            # saving self.output_df to "ram" for using in saveData :
+            self.output_df = df[df_active & df_availables]
+            
             # filteering table to Only select "id_product", "name", "price" from "active" rows :
-            filtered = df.loc[df["active"] == 1, ["id_product", "name", "price"]]
+            filtered = df.loc[(df["active"] == 1) & df_availables , ["id_product", "name", "price"]]
             self.__list_data = [Data(row.id_product, row.name, row.price) for row in filtered.itertuples()]
             self.len = len(self.__list_data)
             logger.debug(f"list_data exported from xlsx is = (len= {self.len}) "+str([{'id': d.id, 'name': d.name, 'price': d.price} for d in self.__list_data])) 
@@ -73,7 +86,7 @@ class DataList :
             logger.error("No xlsx files found in the input xlsx folder")
             raise FileNotFoundError("No files found in the specified folder")
         except Exception as e :
-            logger.exception(f"error during xlsx loading: ")
+            logger.exception(f"error during initing DataList: ")
             raise
 
     def current(self)-> Data :
@@ -113,15 +126,7 @@ class DataList :
     def saveData(self) :
         """Save all of changes maded untill now from memory to xlsx file"""
         try:
-            df = pandas.read_excel(self.output_path)
-            # Original stats
-            len_original_rows = len(df)
-            len_original_ids = len(set(df["id_product"]))
-            # Remove all active == 0 :
-            inactive_ids = set(df.loc[df["active"] == 0, "id_product"])
-            inactive_rows = df[df["id_product"].isin(inactive_ids)]
-            df = df.drop(inactive_rows.index)
-            logger.info(f"Original file: {len_original_ids} ids in '{len_original_rows}' rows --> inactives (removed): '{len(inactive_ids)}' ids in '{len(inactive_rows)}' rows --> actives (remained): '{len(set(df["id_product"]))}' ids in '{len(df)}' rows")
+            df = self.output_df
             # filter unchangeds & include changes :
             new_rows = []
             data_map = {d.id: d for d in self.__list_data}
