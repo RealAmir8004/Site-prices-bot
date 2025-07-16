@@ -23,7 +23,7 @@ class Data :
 
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
-        logger.info("Scraping for product ...")
+        logger.info(f"Scraping for product (id='{self.id}')...")
         sites = scrap(self.name) 
         while len(sites) < RESULTS:
             sites.append(Site(shop_name=None , price=0, badged=False, suggest_price=False))
@@ -80,12 +80,15 @@ class DataList :
         return self.__list_data[self.__index]
     
     def updateAll(self , bar):
+        logger.info("→→→→→→→→→ 'All prudacts Updating'")
         for i, d in enumerate(self.__list_data):
             d.update()
             canceled = bar.progress(i)
             if canceled:
+                logger.info(f"Canceled!")
                 break
             sleep(random.uniform(2, 4))
+        logger.info(f"→→→→→→→→→ 'All prudacts Updating' : procces ended : '{i}' of '{self.len}' prudacts update called")
 
     def showData(self , is_next : bool) -> Data:
         """This will go forward in the list and return the next Data object."""
