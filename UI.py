@@ -277,10 +277,10 @@ class MainApp(QMainWindow, Ui_MainWindow):
         self.label_productName.setText(data.name)
         if index < 0 :
             index = self.len_list+index
-        self.label_productCount.setText(f"{index}/{self.len_list-1} → id={data.id}")
+        self.label_productCount.setText(f"{index+1}/{self.len_list} → id={data.id}")
 
         for i, site in enumerate(data.sites):  
-            bg_color ="background-color: green;" if site.name == "oldSP" else "background-color: red;" if site.badged  else "background-color: white;"
+            bg_color ="background-color: green;" if site.name == "اسپارک دیجی" else "background-color: red;" if site.badged  else "background-color: white;"
             if site.name == None :
                 getattr(self, f"label_{i}").setText('')
                 getattr(self, f"label_{i}0").setText('')
@@ -289,7 +289,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
             else :
                 getattr(self, f"label_{i}").setText(site.name)
                 getattr(self, f"label_{i}0").setText(self.local.toString(site.price))
-                if bg_color =="background-color: green;" :# "oldSP" => suggested_price="dont change price" 
+                if bg_color =="background-color: green;" :# "اسپارک دیجی" => suggested_price="dont change price" 
                     getattr(self, f"radioButton_{i}").setText(site.suggested_price)
                     dont_radio = i
                 else :

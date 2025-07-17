@@ -53,15 +53,14 @@ class RequestTorob :
 
 
 class Site :
-    def __init__(self , shop_name  , price : int , badged : bool = False , suggest_price : bool = True) :
-        """if Site.name is spark->suggest_price must be False """
+    def __init__(self , shop_name  , price : int , badged : bool = False ) :
         self.name = shop_name
         self.price = int(price )
         self.badged = badged
-        if suggest_price :
-            self.suggested_price = self._suggest()
-        else:
+        if shop_name == "اسپارک دیجی" or price == 0:
             self.suggested_price = "dont change price"
+        else:
+            self.suggested_price = self._suggest()
         
     def __repr__(self):
         return (f"Site(name={self.name!r}, price={self.price}, "
@@ -119,11 +118,7 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
             try:
                 if product.get('availability') and not product.get('is_adv', False): # lookslike is_adv=true will have dupicate so this condition neccecery for delte one of them 
                     price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
-                    badged = product.get('is_filtered_by_warranty', False)
-                    if "اسپارک" in shop :
-                        badged_sites.append(Site("oldSP", price, True, False ))  
-                        continue
-                    if badged :
+                    if product.get('is_filtered_by_warranty', False) :
                         badged_sites.append(Site(shop  , price, True ))  
                     else:
                         unbadged_sites.append(Site(shop  , price , False ))                   

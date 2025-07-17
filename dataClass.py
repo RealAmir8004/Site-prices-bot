@@ -26,15 +26,15 @@ class Data :
         logger.info(f"Scraping for product (id='{self.id}')...")
         sites = scrap(self.name) 
         while len(sites) < RESULTS:
-            sites.append(Site(shop_name=None , price=0, badged=False, suggest_price=False))
+            sites.append(Site(shop_name=None , price=0, badged=False))
         
         for site in sites[:RESULTS-1]:
-            if "oldSP" == site.name:
+            if "اسپارک دیجی" == site.name:
                 self.sites = sites[:RESULTS]
                 break
         else:
             self.sites= sites[:RESULTS-1]
-            bisect.insort(self.sites , Site("oldSP", self.price , suggest_price=False))
+            bisect.insort(self.sites , Site("اسپارک دیجی", self.price))
         logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
 
