@@ -29,15 +29,14 @@ class MainController:
         
         self.ui_window.update_table(self.data_list.showData(True))
 
-    def handle_next_button(self):
-        """save changes to memory and show next data"""
+    def save_user_input(self):
         checked_button = self.ui_window.radioButtonGroup.checkedButton()
         if checked_button is None:
-            logger.warning("Next clicked ->checked radio = None")
+            logger.warning("->checked radio = None")
             QMessageBox.critical(self.ui_window, "warning", "No Option selected")
-            return
+            return False
         checked_button = checked_button.objectName()[-1]
-        logger.debug(f"Next clicked ->checked radio = {checked_button}")
+        logger.debug (f"->checked radio = {checked_button}")
         d = self.data_list.current()
         if checked_button == '6' :
             self.ui_window.spinBox.interpretText()
@@ -46,20 +45,24 @@ class MainController:
         else :# '1' , '2' , '3' , '4' , '5' 
             d.chosen_site = checked_button
             logger.info(f"price updated from ={d.price} to ={d.sites[int(d.chosen_site)].suggested_price}")  
-        # show next data
+        
+    def handle_next_button(self):
+        """save changes to memory and show next data"""
+        logger.debug("Next clicked!")
+        if self.save_user_input() is False :
+            return 
         self.ui_window.dataChanged.emit(self.data_list.showData(True))
-
 
     def handle_save_button(self):
         """save all of changes maded untill now from memory to xlsx file"""
         logger.info("Save clicked!")
-        self.handle_next_button()
+        self.save_user_input()
         self.data_list.saveData()
         QMessageBox.critical(self.ui_window, "Info", "Saved successfully")
 
     def handle_back_button(self):
         """save changes to memory (if changed)and show previuos data"""
-        logger.debug(f"Back clicked ") 
+        logger.debug(f"Back clicked!") 
         self.ui_window.dataChanged.emit(self.data_list.showData(False))
 
     def run(self):
