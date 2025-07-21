@@ -298,11 +298,15 @@ class MainApp(QMainWindow, Ui_MainWindow):
             getattr(self, f"label_{i}").setStyleSheet(bg_color)
             getattr(self, f"label_{i}0").setStyleSheet(bg_color)
             getattr(self, f"radioButton_{i}").setStyleSheet(bg_color)
+        # must commit : bug fixed if sites[1 AND 0] both are unacceptbale
 
-        if isinstance(data.sites[0].suggested_price, str): # if site[0] == spark
-            self.spinBox.setValue(data.sites[1].suggested_price)
-        else:
+        try:
             self.spinBox.setValue(data.sites[0].suggested_price)
+        except TypeError:
+            try:
+                self.spinBox.setValue(data.sites[1].suggested_price)
+            except TypeError:
+                pass
         self.__set_radio_checked(data,  dont_radio)
         logger.info(f"UI updated")
 
