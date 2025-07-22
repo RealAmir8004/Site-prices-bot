@@ -1,8 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow , QProgressDialog
+from PyQt5.QtWidgets import QMainWindow , QProgressDialog , QMessageBox
 from PyQt5.QtCore import pyqtSlot , pyqtSignal , QLocale
-from dataClass import Data
-from dataClass import Site
 from constants import RESULTS
 from import_logging import get_logger
 import sys
@@ -251,12 +249,24 @@ class Ui_MainWindow(object):
 
 
 class MainApp(QMainWindow, Ui_MainWindow):
+    _instance = None
     dataChanged = pyqtSignal(tuple)
+    
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+    
     def __init__(self):
+        if MainApp._instance is not None:
+            raise RuntimeError("Use MainApp.instance() to get the singleton instance.")
         super().__init__()
         self.setupUi(self)
         self.__setup_connections()
         self.local = QLocale()
+        MainApp._instance = self 
+
     def __setup_connections(self):
         self.dataChanged.connect(self.update_table) 
 
@@ -264,7 +274,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         self.len_list = give_me_len_list
 
     @pyqtSlot(tuple)
-    def update_table(self , tuple_of_dataIndex : tuple[Data , int]):
+    def update_table(self ,tuple_of_dataIndex):
         data , index = tuple_of_dataIndex
         if data is None:
             logger.warning("No data to display.")
@@ -323,8 +333,12 @@ class MainApp(QMainWindow, Ui_MainWindow):
                 self.spinBox.setValue(chosen)  
 
 
+def critical_message(message):
+    QMessageBox.critical(MainApp.instance(), "!!!", str(message))
+
 class ProgressDialog(QProgressDialog):
-    def __init__(self,mainApp):
+    def __init__(self):
+        mainApp = MainApp.instance()
         self.max = mainApp.len_list
         super().__init__("Updating products...", "Cancel", 0, self.max, mainApp)
         self.setWindowTitle("Please Wait")

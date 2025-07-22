@@ -10,6 +10,7 @@ from  stat import S_IWRITE
 from openpyxl import load_workbook
 from time import sleep
 import random  
+import UI
 
 logger = get_logger(__name__)
 
@@ -92,7 +93,8 @@ class DataList :
     def current(self)-> Data :
         return self.__list_data[self.__index]
     
-    def updateAll(self , bar):
+    def updateAll(self):
+        bar = UI.ProgressDialog()
         logger.info("→→→→→→→→→ 'All prudacts Updating'")
         for i, d in enumerate(self.__list_data):
             d.update()

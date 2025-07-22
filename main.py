@@ -1,8 +1,7 @@
-from PyQt5.QtWidgets import QApplication , QMessageBox
-from UI import MainApp , ProgressDialog
+from PyQt5.QtWidgets import QApplication 
+import UI
 import sys
 from dataClass import DataList
-from scraping import Site
 from import_logging import get_logger
 # RESULTS defined in constants.py
 
@@ -11,17 +10,16 @@ logger = get_logger(__name__)
 class MainController:
     def __init__(self): # ina ghable run shoden ui anjam mishan
         self.app = QApplication(sys.argv)
-        self.ui_window = MainApp()
+        self.ui_window = UI.MainApp()
         try:
             self.data_list = DataList()
         except Exception as e:
-            QMessageBox.critical(self.ui_window, "Error", str(e))
+            UI.critical_message(e)
             sys.exit(1)
 
         self.ui_window.set_len_list(self.data_list.len)
 
-        bar = ProgressDialog(self.ui_window) # ↓ also
-        self.data_list.updateAll(bar) # can be commented for not-updating All at first of program
+        self.data_list.updateAll() # can be commented for not-updating All at first of program
 
         self.ui_window.nextButton.clicked.connect(self.handle_next_button)
         self.ui_window.backButton.clicked.connect(self.handle_back_button)
@@ -33,7 +31,7 @@ class MainController:
         checked_button = self.ui_window.radioButtonGroup.checkedButton()
         if checked_button is None:
             logger.warning("->checked radio = None")
-            QMessageBox.critical(self.ui_window, "warning", "No Option selected")
+            UI.critical_message("No Option selected")
             return False
         checked_button = checked_button.objectName()[-1]
         logger.debug (f"->checked radio = {checked_button}")
@@ -58,7 +56,7 @@ class MainController:
         logger.info("Save clicked!")
         self.save_user_input()
         self.data_list.saveData()
-        QMessageBox.critical(self.ui_window, "Info", "Saved successfully")
+        UI.critical_message("Saved successfully")
 
     def handle_back_button(self):
         """save changes to memory (if changed)and show previuos data"""
