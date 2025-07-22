@@ -4,31 +4,55 @@ from bs4 import BeautifulSoup
 from json import loads
 from bs4.element import Tag 
 
-from constants import RESULTS , RESULTS_NUM
 from import_logging import get_logger
+from pathlib import Path
+import pandas as pd
+import UI
+import sys
+from urllib.parse import urlparse
 
 logger = get_logger(__name__)
 
-def search_google (data_name):
-    try:
-        from googlesearch import search
-        import re
-        query = data_name
-        targets = []
-        target_pattern = r"https://torob.com/"
-        search_results = search(query , RESULTS_NUM)
-        for result in search_results:
-            if re.match(target_pattern,result):
-                targets.append( result)
-        if not targets:
-            logger.warning(f"not any torob found in first {RESULTS_NUM}-- results of google: {search_results}")
-            return []
+class TorobURL :
+    _instance = False  
+    @classmethod
+    def _load_data(cls):
+        try :
+            input_folder = Path("input torob")
+            csv_file_path = next(input_folder.glob("*.csv"))
+            logger.info(f"Using torob-csv file: {csv_file_path}")
+        except StopIteration:
+            e = "No csv files found in the 'input torob' folder"
+            logger.error(e+" → sys.exit(1) called")
+            UI.critical_message(e)
+            sys.exit(1)
 
-        logger.debug(f"Google torob search result(s): {targets}")
-        return targets
-    except Exception :
-        logger.exception(f"Error during Google search:")
-        return []
+        df = pd.read_csv(csv_file_path,encoding='utf-16',sep='\t')
+        cls.url_map = dict(zip(df['نام کالا'], df['لینک ترب']))
+        cls._instance = True
+
+    @classmethod
+    def shorten_torob_url(cls ,url):
+        parsed = urlparse(url)
+        parts = parsed.path.strip("/").split("/") # path='/p/8a99b150-...(ID)/long-title(uneccecery)'
+        if len(parts) > 2 and parts[0] == "p":
+            short_path = f"/p/{parts[1]}/"
+            return f"{parsed.scheme}://{parsed.netloc}{short_path}"
+        else:
+            logger.warning(f"url skiped from shorten_torob_url() :url='{url}'")
+            return url
+        
+    @classmethod
+    def get_url(cls , name):
+        if not cls._instance :
+            cls._load_data()
+        try :
+            return cls.shorten_torob_url(cls.url_map[name])
+        except KeyError:
+            logger.warning(f"name='{name}' not founded in csv")
+            return None
+        
+
 
 class RequestTorob :
     _session = None  
@@ -42,6 +66,8 @@ class RequestTorob :
     @classmethod
     def get_html(cls , url):
         cls._init_session()
+        if url.startswith("http://"):
+            url = "https://" + url[len("http://"):]
         try:
             response = cls._session.get(url)
             response.raise_for_status()
@@ -133,13 +159,14 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
     
 
 def scrap (data_name):
-    """ search torob for a product and return buy-box and 'RESULTS' of sites in 'Site' object arranged by priority """
-    try:
-        results = search_google(data_name)
-        if not results:
-            return []
-        logger.info(f"requesting torob at url={results[0]}")
-        response = RequestTorob.get_html(results[0]) # targets[0] = first torob result(url)
+    """ request torob for a product and return buy-box and 'RESULTS' of sites in 'Site' object arranged by priority """
+    url = TorobURL.get_url(data_name)
+    if url is None :
+        logger.warning(f"url not was not avalable in csv for ='{data_name}'")
+        return []
+    logger.info(f"requesting torob at url={url}")
+    try :
+        response = RequestTorob.get_html(url)
         if response is None:
             logger.error("Failed to fetch Torob page.")
             return []
