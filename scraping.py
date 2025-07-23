@@ -153,18 +153,19 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
 
     
 
-def scrap (data_name):
+def scrap (data_name , url):
     """ request torob for a product and return buy-box and 'RESULTS' of sites in 'Site' object arranged by priority """
-    url = TorobURL.get_url(data_name)
+    if url is None :
+        url = TorobURL.get_url(data_name)
     if url is None :
         logger.warning(f"url not was not avalable in csv for ='{data_name}'")
-        return []
+        return [] , None
     logger.info(f"requesting torob at url={url}")
     try :
         response = RequestTorob.get_html(url)
         if response is None:
             logger.warning("Failed to get torob.com response")
-            return []
+            return [] , url
         soup = BeautifulSoup(response.content , "html5lib")    
         badged_sites , unbadged_sites = get_all_sites(soup) 
         sites = sorted(badged_sites + unbadged_sites)
@@ -172,7 +173,7 @@ def scrap (data_name):
             logger.warning(f"not any sites found at torob.result for product = {data_name}")
         else :
             logger.info(f"Final sites list(len:{len(sites)}): {sites}")
-            return sites
+            return sites , url
     except Exception as e:
         logger.error(f"Error in scrap():{e}")
-    return []
+    return [] , url

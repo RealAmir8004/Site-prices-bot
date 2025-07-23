@@ -21,11 +21,12 @@ class Data :
         self.price = int(price)
         self.sites : list[Site] = None
         self.chosen_site = None
+        self.torob_url = None
 
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
         logger.info(f"Scraping for product (id='{self.id}')...")
-        sites = scrap(self.name) 
+        sites , self.torob_url = scrap(self.name , self.torob_url) 
         while len(sites) < RESULTS:
             sites.append(Site(shop_name=None , price=0, badged=False))
         

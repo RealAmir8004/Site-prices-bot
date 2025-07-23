@@ -11,9 +11,8 @@ logger = get_logger(__name__)
 # Ui_MainWindow exacly copyd from .py file created by qt designer ( PyQt5 UI code generator 5.15.11)
 # only change Ui_MainWindow in qt designer (create a versionN.ui )
 
-# generated from reading ui file 'version3-2.py' 
-# all extra : (like retranslateUi + QtGui.QFont())
-# are removed for performnac
+# generated from reading ui file 'version4.ui' 
+# +all extra are removed
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -27,9 +26,9 @@ class Ui_MainWindow(object):
         font.setPointSize(14)
         self.label_productName.setFont(font)
         self.label_productName.setText("Product")
-        self.label_productName.setTextFormat(QtCore.Qt.AutoText)
         self.label_productName.setScaledContents(False)
         self.label_productName.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_productName.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         self.label_productName.setObjectName("label_productName")
         self.nextButton = QtWidgets.QPushButton(self.centralwidget)
         self.nextButton.setGeometry(QtCore.QRect(710, 540, 75, 23))
@@ -232,9 +231,15 @@ class Ui_MainWindow(object):
         self.label_productCount.setGeometry(QtCore.QRect(650, 60, 201, 20))
         self.label_productCount.setFont(font)
         self.label_productCount.setText("1/100")
-        self.label_productCount.setTextFormat(QtCore.Qt.AutoText)
         self.label_productCount.setScaledContents(False)
         self.label_productCount.setObjectName("label_productCount")
+        self.label_url = QtWidgets.QLabel(self.centralwidget)
+        self.label_url.setGeometry(QtCore.QRect(50, 60, 581, 21))
+        self.label_url.setText("<a href=\"https://example.com\">https://example.com</a>")
+        self.label_url.setTextFormat(QtCore.Qt.RichText)
+        self.label_url.setOpenExternalLinks(True)
+        self.label_url.setTextInteractionFlags(QtCore.Qt.LinksAccessibleByKeyboard|QtCore.Qt.LinksAccessibleByMouse|QtCore.Qt.TextBrowserInteraction|QtCore.Qt.TextSelectableByKeyboard|QtCore.Qt.TextSelectableByMouse)
+        self.label_url.setObjectName("label_url")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1010, 21))
@@ -287,6 +292,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         if index < 0 :
             index = self.len_list+index
         self.label_productCount.setText(f"{index+1}/{self.len_list} → id={data.id}")
+        self.label_url.setText(f'<a href="{data.torob_url}">{data.torob_url}</a>') 
 
         for i, site in enumerate(data.sites):  
             bg_color ="background-color: green;" if site.name == "اسپارک دیجی" else "background-color: red;" if site.badged  else "background-color: white;"
