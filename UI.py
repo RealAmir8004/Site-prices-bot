@@ -1,10 +1,9 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QMainWindow , QProgressDialog , QMessageBox
+from PyQt5.QtWidgets import QMainWindow , QProgressDialog , QMessageBox , QApplication
 from PyQt5.QtCore import pyqtSlot , pyqtSignal , QLocale
 from constants import RESULTS
 from import_logging import get_logger
 import sys
-from PyQt5.QtWidgets import QApplication
 
 logger = get_logger(__name__)
 

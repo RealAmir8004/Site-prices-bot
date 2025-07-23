@@ -5,7 +5,7 @@ import bisect
 from import_logging import get_logger
 import pandas 
 import shutil
-from os import chmod
+import os
 from  stat import S_IWRITE
 from openpyxl import load_workbook
 from time import sleep
@@ -56,7 +56,7 @@ class DataList :
             # Copy xlsx file to output folder
             output_folder = Path("output xlsx")
             if output_folder.exists():
-                shutil.rmtree(output_folder , onerror=lambda func, path, _: (chmod(path, S_IWRITE), func(path)))
+                shutil.rmtree(output_folder , onerror=lambda func, path, _: (os.chmod(path, S_IWRITE), func(path)))
             output_folder.mkdir(exist_ok=True)
             self.output_path = output_folder / xlsx_file_path.name
             shutil.copy(xlsx_file_path, self.output_path)
@@ -84,8 +84,9 @@ class DataList :
             logger.debug(f"list_data exported from xlsx is = (len= {self.len}) "+str([{'id': d.id, 'name': d.name, 'price': d.price} for d in self.__list_data])) 
             # fix (if later needed): we can use __repr__ in Data instead of prevous line 
         except StopIteration:
-            logger.error("No xlsx files found in the input xlsx folder")
-            raise FileNotFoundError("No files found in the specified folder")
+            e = "No xlsx files found in the 'input xlsx' folder"
+            logger.error(e+" → sys.exit(1) called")
+            raise FileNotFoundError(e)
         except Exception as e :
             logger.exception(f"error during initing DataList: ")
             raise

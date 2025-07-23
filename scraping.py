@@ -1,9 +1,6 @@
 import requests  
-from requests.exceptions import HTTPError
 from bs4 import BeautifulSoup
-from json import loads
-from bs4.element import Tag 
-
+import json
 from import_logging import get_logger
 from pathlib import Path
 import pandas as pd
@@ -73,9 +70,11 @@ class RequestTorob :
             response.raise_for_status()
             logger.debug(f'request Successed!')
             return response
-        except Exception:
-            logger.exception(f'some error occurred in requesting: ')
-            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed: {e}")
+        except Exception as e:
+            logger.error(f'some error occurred in requesting: {e}')
+        return None
 
 
 class Site :
@@ -127,31 +126,27 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
         if not script_tag or not script_tag.string:
             logger.error("Could not find the required script tag for product data.")
             return [], []
-        json_data = loads(script_tag.string)  
+        json_data = json.loads(script_tag.string)  
 
         products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
-    
-    except Exception :
-        logger.exception(f"Error parsing product data ")
-        return [], []
-
+    except Exception as e:
+        logger.error(f"Error parsing product data : {e}")
+        raise
     # (info@) 
     badged_sites = []
     unbadged_sites = []
-    try:
-        for product in products: # 2 = 1(buy-box ) + 1 ((may be)old price)
+    shop = None
+    for product in products:
+        try:
             shop = product.get('shop_name', '')
-            try:
-                if product.get('availability') and not product.get('is_adv', False): # lookslike is_adv=true will have dupicate so this condition neccecery for delte one of them 
-                    price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
-                    if product.get('is_filtered_by_warranty', False) :
-                        badged_sites.append(Site(shop  , price, True ))  
-                    else:
-                        unbadged_sites.append(Site(shop  , price , False ))                   
-            except Exception :
-                logger.exception(f"Error processing product {shop} : ")
-    except Exception :
-        logger.exception(f"Error writing to other_sites.txt: ")
+            if product.get('availability') and not product.get('is_adv', False): # lookslike is_adv=true will have dupicate so this condition neccecery for delte one of them 
+                price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
+                if product.get('is_filtered_by_warranty', False) :
+                    badged_sites.append(Site(shop  , price, True ))  
+                else:
+                    unbadged_sites.append(Site(shop  , price , False ))                   
+        except Exception :
+            logger.exception(f"Error processing product for site ={shop} : ")
     logger.debug(f"Badged sites (len:{len(badged_sites)}): {badged_sites}")
     logger.debug(f"Unbadged sites (len:{len(unbadged_sites)}): {unbadged_sites}")
     return badged_sites , unbadged_sites 
@@ -168,20 +163,16 @@ def scrap (data_name):
     try :
         response = RequestTorob.get_html(url)
         if response is None:
-            logger.error("Failed to fetch Torob page.")
+            logger.warning("Failed to get torob.com response")
             return []
         soup = BeautifulSoup(response.content , "html5lib")    
-
         badged_sites , unbadged_sites = get_all_sites(soup) 
         sites = sorted(badged_sites + unbadged_sites)
-        
-        logger.info(f"Final sites list(len:{len(sites)}): {sites}")
-        return sites
-        # fix in new version if needed  :
-        # code : age sites[0] bdard nemikhord
-        #   sites[0] = sites[1] 
-    except Exception :
-        logger.exception(f"Error in scrap():")
-        return []
-
-    # return  badged_sites , unbadged_sites ,  sites , box  # age badged_sites , unbadged_sites  mikhaym 
+        if not sites :
+            logger.warning(f"not any sites found at torob.result for product = {data_name}")
+        else :
+            logger.info(f"Final sites list(len:{len(sites)}): {sites}")
+            return sites
+    except Exception as e:
+        logger.error(f"Error in scrap():{e}")
+    return []
