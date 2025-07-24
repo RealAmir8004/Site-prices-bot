@@ -19,7 +19,7 @@ class Data :
         self.id = int(id)
         self.name = str(name)
         self.price = int(price)
-        self.sites : list[Site] = None
+        self.sites = None
         self.chosen_site = None
         self.torob_url = None
 
@@ -28,15 +28,15 @@ class Data :
         logger.info(f"Scraping for product (id='{self.id}')...")
         sites , self.torob_url = scrap(self.name , self.torob_url) 
         while len(sites) < RESULTS:
-            sites.append(Site(shop_name=None , price=0, badged=False))
+            sites.add(Site(shop_name=None , price=0, badged=False))
         
-        for site in sites[:RESULTS-1]:
+        for site in sites[:RESULTS]:
             if "اسپارک دیجی" == site.name:
                 self.sites = sites[:RESULTS]
                 break
         else:
             self.sites= sites[:RESULTS-1]
-            bisect.insort(self.sites , Site("اسپارک دیجی", self.price))
+            self.sites.add(Site("اسپارک دیجی", self.price))
         logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
 

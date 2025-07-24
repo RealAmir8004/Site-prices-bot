@@ -7,6 +7,8 @@ import pandas as pd
 import UI
 import sys
 from urllib.parse import urlparse
+from sortedcontainers import SortedList
+from constants import RESULTS
 
 logger = get_logger(__name__)
 
@@ -92,6 +94,8 @@ class Site :
                 f"badged={self.badged}, suggested_price={self.suggested_price!r})")
 
     def __lt__(self, other):  # Define sorting rule = buy-box of Torob priority rule 
+        if self.price == 0 or other.price == 0: # appending empty prices at end 
+            return other.price == 0 and self.price != 0
         if self.badged == other.badged:
             return self.price < other.price
         if self.badged and not other.badged:
@@ -117,10 +121,7 @@ class Site :
         return int(susuggested)
         
     
-# (info@) : rah haye mokhtalefi baraye sort bodan  list ha hast 
-    # 1 - if : product['is_adv']  delete konim -> list ha khodeshon sort shode mian biron (vali ye data hazf mishe) 
-    # 2 - sortedList
-def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site]]: 
+def get_all_sites (soup : BeautifulSoup): 
     try:
         script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
         if not script_tag or not script_tag.string:
@@ -132,24 +133,18 @@ def get_all_sites (soup : BeautifulSoup)-> tuple[list[Site],list[Site],list[Site
     except Exception as e:
         logger.error(f"Error parsing product data : {e}")
         raise
-    # (info@) 
-    badged_sites = []
-    unbadged_sites = []
+    sites = SortedList()
     shop = None
-    for product in products:
+    for product in products[:RESULTS*2]:
         try:
             shop = product.get('shop_name', '')
             if product.get('availability') and not product.get('is_adv', False): # lookslike is_adv=true will have dupicate so this condition neccecery for delte one of them 
                 price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
-                if product.get('is_filtered_by_warranty', False) :
-                    badged_sites.append(Site(shop  , price, True ))  
-                else:
-                    unbadged_sites.append(Site(shop  , price , False ))                   
+                badged = product.get('is_filtered_by_warranty', False)
+                sites.add(Site(shop, price, badged))
         except Exception :
             logger.exception(f"Error processing product for site ={shop} : ")
-    logger.debug(f"Badged sites (len:{len(badged_sites)}): {badged_sites}")
-    logger.debug(f"Unbadged sites (len:{len(unbadged_sites)}): {unbadged_sites}")
-    return badged_sites , unbadged_sites 
+    return sites
 
     
 
@@ -167,8 +162,7 @@ def scrap (data_name , url):
             logger.warning("Failed to get torob.com response")
             return [] , url
         soup = BeautifulSoup(response.content , "html5lib")    
-        badged_sites , unbadged_sites = get_all_sites(soup) 
-        sites = sorted(badged_sites + unbadged_sites)
+        sites = get_all_sites(soup) 
         if not sites :
             logger.warning(f"not any sites found at torob.result for product = {data_name}")
         else :
