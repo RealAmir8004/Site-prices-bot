@@ -11,6 +11,8 @@ from openpyxl import load_workbook
 from time import sleep
 import random  
 import UI
+import sqlite3
+import json
 
 logger = get_logger(__name__)
 
@@ -40,6 +42,75 @@ class Data :
         logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
 
+
+class DataDB:
+    def __init__(self, db_path=DB_PATH):
+        self.conn = sqlite3.connect(str(db_path))
+        self.cursor = self.conn.cursor()
+        self._create_table()
+
+    def _create_table(self):
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS data (
+                id           INTEGER PRIMARY KEY,
+                name         TEXT    NOT NULL,
+                price        INTEGER NOT NULL,
+                sites        TEXT,          -- JSON list of Site dicts
+                chosen_site  TEXT,          -- could be str or serialized int
+                torob_url    TEXT
+            )
+        """)
+        self.conn.commit()
+
+    def load_all(self):
+        self.cursor.execute("""
+            SELECT id, name, price, sites, chosen_site, torob_url
+            FROM data
+        """)
+        rows = self.cursor.fetchall()
+        result = []
+        for id_, name, price, sites_json, chosen_site, torob_url in rows:
+            d = Data(id_, name, price)
+            if sites_json:
+                raw_sites = json.loads(sites_json)
+                d.sites = [Site.from_dict(s) for s in raw_sites]
+            else:
+                d.sites = []
+            d.chosen_site = chosen_site
+            d.torob_url   = torob_url
+            result.append(d)
+        return result
+
+    def save_all(self, data_list):
+        self.cursor.execute("DELETE FROM data")
+        # Delete every existed row  ↑
+        payload = []
+        for d in data_list:
+            sites_json = json.dumps([s.to_dict() for s in (d.sites or [])])
+            payload.append((d.id, d.name, d.price, sites_json, d.chosen_site, d.torob_url))
+        self.cursor.executemany("""
+            INSERT OR REPLACE INTO data
+            (id, name, price, sites, chosen_site, torob_url)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, payload)
+        self.conn.commit()
+
+    def update(self, d):
+        sites_json = json.dumps([s.to_dict() for s in (d.sites or [])])
+        self.cursor.execute("""
+            UPDATE data
+               SET name = ?,
+                   price = ?,
+                   sites = ?,
+                   chosen_site = ?,
+                   torob_url = ?
+             WHERE id = ?
+        """, (d.name, d.price, sites_json, d.chosen_site, d.torob_url, d.id))
+        self.conn.commit()
+
+    def close(self):
+        self.conn.close()
+
 class DataList :
     """
         creat one object of this class for getting a Data list from xlsx and use it\n
@@ -47,8 +118,9 @@ class DataList :
     """
     _instance = None
     __index = -1
+    __db = DataDB()
     __list_data : list[Data]= []
-    def __init__(self) :
+    def __init__(self , re_do = True) :
         try:
             input_folder = Path("input xlsx")
             xlsx_file_path = next(input_folder.glob("*.xlsx"))
@@ -77,12 +149,18 @@ class DataList :
             logger.info(f"Original file: {len(set(df["id_product"]))} ids in '{len(df)}' rows --> actives : '{len(active_products)}' ids in '{df_active.sum()}' rows --> availables : '{len(availables_products)}' ids in '{df_availables.sum()}' rows ")
             # saving self.output_df to "ram" for using in saveData :
             self.output_df = df[df_active & df_availables]
-            
-            # filteering table to Only select "id_product", "name", "price" from "active" rows :
-            filtered = df.loc[(df["active"] == 1) & df_availables , ["id_product", "name", "price"]]
-            self.__list_data = [Data(row.id_product, row.name, row.price) for row in filtered.itertuples()]
+            if re_do and Path(DB_PATH).exists():
+                # trying to acces db 
+                self.__list_data = self.__db.load_all()
+                logger.info(f"list_data exported from db='{DB_PATH}'")
+            else :
+                # filteering table to Only select "id_product", "name", "price" from "active" rows :
+                filtered = df.loc[(df["active"] == 1) & df_availables , ["id_product", "name", "price"]]
+                self.__list_data = [Data(row.id_product, row.name, row.price) for row in filtered.itertuples()]
+                logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
+                self.__db.save_all(self.__list_data)
             self.len = len(self.__list_data)
-            logger.debug(f"list_data exported from xlsx is = (len= {self.len}) "+str([{'id': d.id, 'name': d.name, 'price': d.price} for d in self.__list_data])) 
+            logger.debug(f"list_data=(len= {self.len}) "+str([{'id': d.id, 'name': d.name, 'price': d.price} for d in self.__list_data])) 
             # fix (if later needed): we can use __repr__ in Data instead of prevous line 
         except StopIteration:
             e = "No xlsx files found in the 'input xlsx' folder"
@@ -99,7 +177,9 @@ class DataList :
         bar = UI.ProgressDialog()
         logger.info("→→→→→→→→→ 'All prudacts Updating'")
         for i, d in enumerate(self.__list_data):
-            d.update()
+            if d.sites is None :
+                d.update()
+                self.__db.update(d)
             canceled = bar.progress(i)
             if canceled:
                 logger.info(f"Canceled!")
@@ -122,6 +202,7 @@ class DataList :
             logger.info(f"Current index of list: {self.__index} --refers to id='{curr.id}'")
             if curr.sites is None:
                 curr.update()
+                self.__db.update(curr)
             return curr , self.__index
         except Exception :
             logger.exception(f"Unexpected error in showData: ")

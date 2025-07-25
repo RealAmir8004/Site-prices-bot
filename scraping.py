@@ -123,7 +123,28 @@ class Site :
             susuggested = temp    
         return int(susuggested)
         
-    
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "price": self.price,
+            "badged": self.badged,
+            "city": self.city,
+            "last_change": self.last_change,
+            "score_text": self.score_text
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(
+            shop_name=data.get("name"),
+            price=data.get("price", 0),
+            city=data.get("city", ''),
+            last_change=data.get("last_change", ''),
+            score_text=data.get("score_text", ''),
+            badged=data.get("badged", False)
+        )
+
+
 def get_all_sites (soup : BeautifulSoup): 
     try:
         script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
