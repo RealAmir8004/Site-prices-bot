@@ -80,10 +80,13 @@ class RequestTorob :
 
 
 class Site :
-    def __init__(self , shop_name  , price : int , badged : bool = False ) :
+    def __init__(self , shop_name  , price : int , city='', last_change='', score_text='', badged = False ) :
         self.name = shop_name
         self.price = int(price )
         self.badged = badged
+        self.city = city
+        self.last_change = last_change
+        self.score_text = score_text
         if shop_name == "اسپارک دیجی" or price == 0:
             self.suggested_price = "dont change price"
         else:
@@ -137,11 +140,14 @@ def get_all_sites (soup : BeautifulSoup):
     shop = None
     for product in products[:RESULTS*2]:
         try:
-            shop = product.get('shop_name', '')
+            shop = product.get('shop_name')
             if product.get('availability') and not product.get('is_adv', False): # lookslike is_adv=true will have dupicate so this condition neccecery for delte one of them 
                 price = int(''.join(filter(str.isdigit, product.get('price_text', '0'))))
+                city = product.get('shop_name2', '')
+                last_change = product.get('last_price_change_date', '')
+                score_text = product.get('score_info', {}).get('score_text', '')
                 badged = product.get('is_filtered_by_warranty', False)
-                sites.add(Site(shop, price, badged))
+                sites.add(Site(shop, price, city, last_change, score_text, badged))
         except Exception :
             logger.exception(f"Error processing product for site ={shop} : ")
     return sites
