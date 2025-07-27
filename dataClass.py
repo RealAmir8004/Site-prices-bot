@@ -13,6 +13,9 @@ import random
 import UI
 import sqlite3
 import json
+DB_PATH = "data.db"
+INPUT_FOLDER = Path("input xlsx")
+OUTPUT_FOLDER = Path("output xlsx")
 
 logger = get_logger(__name__)
 
@@ -116,25 +119,18 @@ class DataList :
         creat one object of this class for getting a Data list from xlsx and use it\n
         class contains a list[Data]
     """
-    _instance = None
     __index = -1
     __db = DataDB()
     __list_data : list[Data]= []
     def __init__(self , re_do = True) :
         try:
-            input_folder = Path("input xlsx")
-            xlsx_file_path = next(input_folder.glob("*.xlsx"))
-            logger.info(f"Using xlsx file: {xlsx_file_path}")
-            
+            xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))
             # Copy xlsx file to output folder
-            output_folder = Path("output xlsx")
-            if output_folder.exists():
-                shutil.rmtree(output_folder , onerror=lambda func, path, _: (os.chmod(path, S_IWRITE), func(path)))
-            output_folder.mkdir(exist_ok=True)
-            self.output_path = output_folder / xlsx_file_path.name
+            if OUTPUT_FOLDER.exists():
+                shutil.rmtree(OUTPUT_FOLDER , onerror=lambda func, path, _: (os.chmod(path, S_IWRITE), func(path)))
+            OUTPUT_FOLDER.mkdir(exist_ok=True)
+            self.output_path = OUTPUT_FOLDER / xlsx_file_path.name
             shutil.copy(xlsx_file_path, self.output_path)
-            logger.info(f"Copied xlsx file to: {self.output_path}")
-
             # reading xlsx file
             df = pandas.read_excel(xlsx_file_path)
             
@@ -146,7 +142,6 @@ class DataList :
             availables_products = availables_products[availables_products].index            
             df_availables =df["id_product"].isin(availables_products)
 
-            logger.info(f"Original file: {len(set(df["id_product"]))} ids in '{len(df)}' rows --> actives : '{len(active_products)}' ids in '{df_active.sum()}' rows --> availables : '{len(availables_products)}' ids in '{df_availables.sum()}' rows ")
             # saving self.output_df to "ram" for using in saveData :
             self.output_df = df[df_active & df_availables]
             if re_do and Path(DB_PATH).exists():
