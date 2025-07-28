@@ -9,6 +9,8 @@ import sys
 from urllib.parse import urlparse
 from sortedcontainers import SortedList
 from constants import RESULTS
+import random
+from config import HEADERS_LIST , PROXIES
 
 logger = get_logger(__name__)
 
@@ -57,35 +59,73 @@ class TorobURL :
 
 
 class RequestTorob :
-    _session = None  
-    
+    _session = None
+    _proxies = PROXIES.copy()
+    _headers_list = HEADERS_LIST.copy()
+    _proxy_index = 0
+    _header_index = 0
+
     @classmethod
     def _init_session(cls):
-        if cls._session is None :
+        if cls._session is None:
             cls._session = requests.Session()
-            cls._session.headers.update(        {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.8,fr;q=0.6",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
-            "Referer": "https://www.bing.com/"
-        })
-        
+            random.shuffle(cls._proxies)
+            cls._proxies = cls._validate_proxies(cls._proxies)
+            if not cls._proxies:
+                logger.warning("No valid proxies available after validation.")
+            random.shuffle(cls._headers_list)
+
     @classmethod
-    def get_html(cls , url):
+    def _validate_proxies(cls, proxy_list, test_url="https://httpbin.org/ip", timeout=5):
+        valid = []
+        logger.info("checkng validation of proxies...")
+        for proxy in proxy_list:
+            proxy_cfg = {"http": f"http://{proxy}", "https": f"http://{proxy}"}
+            try:
+                resp = requests.get(test_url, proxies=proxy_cfg, timeout=timeout)
+                logger.warning(f"Proxy {proxy} returned status {resp.status_code}")
+                if resp.status_code == 200:
+                    valid.append(proxy)
+            except Exception as e:
+                logger.warning(f"Proxy {proxy} failed validation: {e}")
+        logger.info("checkng validation of proxies finifshed...")
+        return valid
+
+    @classmethod
+    def _get_next_proxy(cls):
+        if not cls._proxies:
+            return None
+        proxy = cls._proxies[cls._proxy_index % len(cls._proxies)]
+        cls._proxy_index += 1
+        return {"http": f"http://{proxy}","https": f"http://{proxy}",}
+
+    @classmethod
+    def _get_next_headers(cls):
+        if not cls._headers_list:
+            return {}
+        headers = cls._headers_list[cls._header_index % len(cls._headers_list)]
+        cls._header_index += 1
+        return headers
+
+    @classmethod
+    def get_html(cls, url, max_retries=1, timeout=10):
         cls._init_session()
-        if url.startswith("http://"):
-            url = "https://" + url[len("http://"):]
-        try:
-            response = cls._session.get(url)
-            response.raise_for_status()
-            logger.debug(f'request Successed!')
-            return response
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed: {e}")
-        except Exception as e:
-            logger.error(f'some error occurred in requesting: {e}')
+        for attempt in range(1, max_retries + 1):
+            proxy = cls._get_next_proxy()
+            hdrs = cls._get_next_headers()
+            proxy_ip = proxy.get("http") if proxy else "No Proxy"
+            try:
+                response = cls._session.get(url,proxies=proxy,headers=hdrs,timeout=timeout)
+                snippet = response.text[:5000].lower()
+                if not response.text.strip() or any(blk in snippet for blk in ("access denied", "verify you are human", "blocked", "captcha")):
+                    logger.warning(f"Attempt {attempt}: blocked or empty via proxy={proxy}, Using IP = {proxy_ip}, headers={hdrs.get('User-Agent')}")
+                    continue
+                response.raise_for_status()
+                logger.debug(f"Attempt {attempt}: success via proxy={proxy}, Using IP = {proxy_ip}, headers={hdrs.get('User-Agent')}")
+                return response
+            except requests.RequestException as e:
+                logger.warning(f"Attempt {attempt} failed with proxy={proxy}, Using IP = {proxy_ip}, headers={hdrs.get('User-Agent')}: {e}")
+        logger.error("All attempts failed.")
         return None
 
 
