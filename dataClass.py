@@ -13,6 +13,8 @@ import random
 import UI
 import sqlite3
 import json
+from sortedcontainers import SortedList
+
 DB_PATH = "data.db"
 INPUT_FOLDER = Path("input xlsx")
 OUTPUT_FOLDER = Path("output xlsx")
@@ -40,7 +42,7 @@ class Data :
                 self.sites = sites[:RESULTS]
                 break
         else:
-            self.sites= sites[:RESULTS-1]
+            self.sites= SortedList(sites[:RESULTS-1])
             self.sites.add(Site("اسپارک دیجی", self.price))
         logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 

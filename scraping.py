@@ -46,7 +46,10 @@ class TorobURL :
         if not cls._instance :
             cls._load_data()
         try :
-            return cls.shorten_torob_url(cls.url_map[name])
+            url = cls.shorten_torob_url(cls.url_map[name])
+            if url.startswith("http://"):
+                url = "https://" + url[len("http://"):]
+            return url
         except KeyError:
             logger.warning(f"name='{name}' not founded in csv")
             return None
@@ -60,7 +63,14 @@ class RequestTorob :
     def _init_session(cls):
         if cls._session is None :
             cls._session = requests.Session()
-            cls._session.headers.update({"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"})
+            cls._session.headers.update(        {
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.8,fr;q=0.6",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Referer": "https://www.bing.com/"
+        })
         
     @classmethod
     def get_html(cls , url):
@@ -181,13 +191,13 @@ def scrap (data_name , url):
         url = TorobURL.get_url(data_name)
     if url is None :
         logger.warning(f"url not was not avalable in csv for ='{data_name}'")
-        return [] , None
+        return SortedList() , None
     logger.info(f"requesting torob at url={url}")
     try :
         response = RequestTorob.get_html(url)
         if response is None:
             logger.warning("Failed to get torob.com response")
-            return [] , url
+            return SortedList() , url
         soup = BeautifulSoup(response.content , "html5lib")    
         sites = get_all_sites(soup) 
         if not sites :
@@ -197,4 +207,4 @@ def scrap (data_name , url):
             return sites , url
     except Exception as e:
         logger.error(f"Error in scrap():{e}")
-    return [] , url
+    return SortedList() , url
