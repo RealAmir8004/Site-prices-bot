@@ -9,6 +9,8 @@ import sys
 from urllib.parse import urlparse
 from sortedcontainers import SortedList
 from constants import RESULTS
+from googlesearch import search
+import re
 
 logger = get_logger(__name__)
 
@@ -51,6 +53,22 @@ class TorobURL :
             logger.warning(f"name='{name}' not founded in csv")
             return None
         
+
+def search_google (data_name):
+    try:
+        query = data_name
+        target_pattern = r"https://torob.com/"
+        search_results = search(query , 10)
+        for result in search_results:
+            if re.match(target_pattern,result):
+                target = result
+                break
+        if not target:
+            return None
+        return target
+    except Exception :
+        logger.exception(f"Error during Google search:")
+        return None
 
 
 class RequestTorob :
@@ -180,7 +198,10 @@ def scrap (data_name , url):
     if url is None :
         url = TorobURL.get_url(data_name)
     if url is None :
+        url = search_google(data_name)
         logger.warning(f"url not was not avalable in csv for ='{data_name}'")
+    if url is None :
+        logger.warning(f"url also not found in search google")
         return [] , None
     logger.info(f"requesting torob at url={url}")
     try :
