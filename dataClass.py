@@ -13,6 +13,7 @@ import random
 import UI
 import sqlite3
 import json
+from sortedcontainers import SortedList
 DB_PATH = "data.db"
 INPUT_FOLDER = Path("input xlsx")
 OUTPUT_FOLDER = Path("output xlsx")
@@ -40,7 +41,7 @@ class Data :
                 self.sites = sites[:RESULTS]
                 break
         else:
-            self.sites= sites[:RESULTS-1]
+            self.sites= SortedList(sites[:RESULTS-1])
             self.sites.add(Site("اسپارک دیجی", self.price))
         logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
@@ -78,7 +79,7 @@ class DataDB:
                 raw_sites = json.loads(sites_json)
                 d.sites = [Site.from_dict(s) for s in raw_sites]
             else:
-                d.sites = []
+                d.sites = None
             d.chosen_site = chosen_site
             d.torob_url   = torob_url
             result.append(d)
@@ -89,7 +90,7 @@ class DataDB:
         # Delete every existed row  ↑
         payload = []
         for d in data_list:
-            sites_json = json.dumps([s.to_dict() for s in (d.sites or [])])
+            sites_json = None if d.sites is None else json.dumps([s.to_dict() for s in d.sites])
             payload.append((d.id, d.name, d.price, sites_json, d.chosen_site, d.torob_url))
         self.cursor.executemany("""
             INSERT OR REPLACE INTO data
@@ -172,7 +173,7 @@ class DataList :
         bar = UI.ProgressDialog()
         logger.info("→→→→→→→→→ 'All prudacts Updating'")
         for i, d in enumerate(self.__list_data):
-            if d.sites is None :
+            if d.sites is None or d.sites[1].name is None :
                 d.update()
                 self.__db.update(d)
             canceled = bar.progress(i)
