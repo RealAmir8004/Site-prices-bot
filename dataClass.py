@@ -48,10 +48,18 @@ class Data :
 
 
 class DataDB:
+    _instance = None
     def __init__(self, db_path=DB_PATH):
+        if DataDB._instance is not None:
+            raise RuntimeError("Use MainApp.instance() to get the singleton instance.")
         self.conn = sqlite3.connect(str(db_path))
         self.cursor = self.conn.cursor()
         self._create_table()
+        DataDB._instance = self
+    
+    @classmethod
+    def instance(cls):
+        return cls._instance
 
     def _create_table(self):
         self.cursor.execute("""
@@ -80,7 +88,10 @@ class DataDB:
                 d.sites = [Site.from_dict(s) for s in raw_sites]
             else:
                 d.sites = None
-            d.chosen_site = chosen_site
+            if isinstance(chosen_site, str) and len(chosen_site)!=1 :
+                d.chosen_site = int(chosen_site)
+            else :
+                d.chosen_site = chosen_site
             d.torob_url   = torob_url
             result.append(d)
         return result
@@ -99,17 +110,22 @@ class DataDB:
         """, payload)
         self.conn.commit()
 
+    def update_chosen(self, d):
+        self.cursor.execute("""
+            UPDATE data
+            SET chosen_site = ?
+            WHERE id = ?
+        """, (d.chosen_site, d.id))
+        self.conn.commit()
+
     def update(self, d):
         sites_json = json.dumps([s.to_dict() for s in (d.sites or [])])
         self.cursor.execute("""
             UPDATE data
-               SET name = ?,
-                   price = ?,
-                   sites = ?,
-                   chosen_site = ?,
-                   torob_url = ?
-             WHERE id = ?
-        """, (d.name, d.price, sites_json, d.chosen_site, d.torob_url, d.id))
+            SET sites = ?,
+                torob_url = ?
+            WHERE id = ?
+        """, (sites_json, d.torob_url, d.id))
         self.conn.commit()
 
     def close(self):

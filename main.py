@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QApplication 
 import UI
 import sys
-from dataClass import DataList
+from dataClass import DataList , DataDB
 from import_logging import get_logger
 # RESULTS defined in constants.py
 
@@ -43,6 +43,7 @@ class MainController:
         else :# '1' , '2' , '3' , '4' , '5' 
             d.chosen_site = checked_button
             logger.info(f"price updated from ={d.price} to ={d.sites[int(d.chosen_site)].suggested_price}")  
+        DataDB.instance().update_chosen(d)
         
     def handle_next_button(self):
         """save changes to memory and show next data"""
