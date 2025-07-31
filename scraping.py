@@ -9,6 +9,8 @@ import sys
 from urllib.parse import urlparse
 from sortedcontainers import SortedList
 from constants import RESULTS
+import undetected_chromedriver as uc
+import time
 from googlesearch import search
 import re
 
@@ -91,7 +93,7 @@ class RequestTorob :
         })
         
     @classmethod
-    def get_html(cls , url):
+    def get_html(cls , url):# use sleep in updateAll if using this 
         cls._init_session()
         try:
             response = cls._session.get(url)
@@ -102,6 +104,26 @@ class RequestTorob :
             logger.error(f"Request failed: {e}")
         except Exception as e:
             logger.error(f'some error occurred in requesting: {e}')
+        return None
+
+
+def get_html(url: str):
+    try:
+        options = uc.ChromeOptions()
+        options.headless = True  # runs invisible : False for CAPTCHA input
+        options.add_argument("--window-size=300,300")# Set viewport size for headless rendering
+        driver = uc.Chrome(options=options)
+        driver.set_window_position(10000, 0)
+        driver.set_window_size(300, 300)
+        driver.get(url)
+        # input("If you see a CAPTCHA, solve it in the browser, then press Enter here...")
+        time.sleep(2)  # Give page time to load
+        html = driver.page_source
+        driver.quit()
+        logger.debug(f'request Successed!')
+        return html.encode('utf-8')
+    except Exception:
+        logger.exception(f'some error occurred in requesting: ')
         return None
 
 
@@ -213,11 +235,11 @@ def scrap (data_name , url):
         return SortedList() , None
     logger.info(f"requesting torob at url={url}")
     try :
-        response = RequestTorob.get_html(url)
+        response = get_html(url)
         if response is None:
             logger.warning("Failed to get torob.com response")
             return SortedList() , url
-        soup = BeautifulSoup(response.content , "html5lib")    
+        soup = BeautifulSoup(response, "html5lib")    
         sites = get_all_sites(soup) 
         if not sites :
             logger.warning(f"not any sites found at torob.result for product = {data_name}")

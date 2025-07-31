@@ -180,7 +180,7 @@ class DataList :
             if canceled:
                 logger.info(f"Canceled!")
                 break
-            sleep(random.uniform(2, 4))
+            # sleep(random.uniform(2, 4))
         logger.info(f"→→→→→→→→→ 'All prudacts Updating' : procces ended : '{i}' of '{self.len}' prudacts update called")
 
     def showData(self , is_next : bool) -> Data:
