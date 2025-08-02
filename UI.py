@@ -395,6 +395,8 @@ class MainApp(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.__setup_connections()
         self.local = QLocale(QLocale.Persian)
+        self.radioButton_6.toggled.connect(self.spinBox.setEnabled)
+        self.spinBox.setEnabled(self.radioButton_6.isChecked())
         MainApp._instance = self 
 
     def __setup_connections(self):
