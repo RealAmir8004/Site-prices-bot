@@ -455,7 +455,6 @@ class MainApp(QMainWindow, Ui_MainWindow):
             except TypeError:
                 pass
         self.__set_radio_checked(data,  dont_radio)
-        logger.info(f"UI updated")
 
     def __set_radio_checked(self , data , dont_radio):
         chosen = data.chosen_site

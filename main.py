@@ -71,7 +71,7 @@ class MainController:
 
 if __name__ == "__main__":
     with open("app.log", "a", encoding="utf-8") as f:
-        f.write("--------------------------------------------------------------------------------------------------------------\n")
+        f.write("__________________________________________________________________________________________________________________________________________\n")
     logger.info("Starting MainController")
     controller = MainController()
     controller.run()

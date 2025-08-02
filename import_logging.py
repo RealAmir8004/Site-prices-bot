@@ -11,7 +11,7 @@ def get_logger(name):
     file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.WARN)
+    stream_handler.setLevel(logging.DEBUG)
     stream_handler.setFormatter(formatter)
 
     if not logger.hasHandlers():

@@ -1,7 +1,6 @@
 from pathlib import Path
 from scraping import scrap , Site
 from constants import RESULTS
-import bisect
 from import_logging import get_logger
 import pandas 
 import shutil
@@ -28,6 +27,9 @@ class Data :
         self.sites = None
         self.chosen_site = None
         self.torob_url = None
+
+    def __repr__(self):
+        return (f"(id:'{self.id}', name:'{self.name!r}', price:{self.price}, chosen_site={self.chosen_site!r}, scraped?={bool(self.torob_url)})")
 
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
@@ -172,8 +174,7 @@ class DataList :
                 logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
                 self.__db.save_all(self.__list_data)
             self.len = len(self.__list_data)
-            logger.debug(f"list_data=(len= {self.len}) "+str([{'id': d.id, 'name': d.name, 'price': d.price} for d in self.__list_data])) 
-            # fix (if later needed): we can use __repr__ in Data instead of prevous line 
+            logger.debug(f"list_data=(len= {self.len}) {self.__list_data}") 
         except StopIteration:
             e = "No xlsx files found in the 'input xlsx' folder"
             logger.error(e+" → sys.exit(1) called")
@@ -211,6 +212,7 @@ class DataList :
             elif self.__index >= self.len:
                 self.__index = 0
             curr = self.current()
+            logger.info("----------------------------------------------------------")  
             logger.info(f"Current index of list: {self.__index} --refers to id='{curr.id}'")
             if curr.sites is None:
                 curr.update()
