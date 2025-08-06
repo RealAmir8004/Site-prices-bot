@@ -173,10 +173,12 @@ class DataList :
                 self.__list_data = [Data(row.id_product, row.name, row.price) for row in filtered.itertuples()]
                 logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
                 self.__db.save_all(self.__list_data)
+                logger.important("New __list_data:")  
+                for d in self.__list_data:
+                    logger.important(f"ID='{d.id}'={d.price}")
+                logger.important("----------------------------------------------------------")  
             self.len = len(self.__list_data)
             logger.debug(f"list_data=(len= {self.len}) {self.__list_data}") 
-            for d in self.__list_data:
-                logger.important(f"ID='{d.id}'={d.price}")
         except StopIteration:
             e = "No xlsx files found in the 'input xlsx' folder"
             logger.error(e+" → sys.exit(1) called")

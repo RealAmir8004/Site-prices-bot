@@ -35,6 +35,7 @@ class MainController:
             UI.critical_message("No Option selected")
             return False
         checked_button = checked_button.objectName()[-1]
+        logger.debug(f"->checked radio = {checked_button}")
         d = self.data_list.current()
         if checked_button == '6' :
             self.ui_window.spinBox.interpretText()
@@ -46,7 +47,6 @@ class MainController:
         if chosen != d.chosen_site :
             d.chosen_site = chosen
             DataDB.instance().update_chosen(d)
-            logger.debug(f"->checked radio = {checked_button}")
             logger.info(f"price updated from ={d.price} to ={changed_price}")
             logger.important(f"ID='{d.id}':→{changed_price}")
         else :
