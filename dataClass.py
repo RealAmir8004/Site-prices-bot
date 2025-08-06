@@ -175,6 +175,8 @@ class DataList :
                 self.__db.save_all(self.__list_data)
             self.len = len(self.__list_data)
             logger.debug(f"list_data=(len= {self.len}) {self.__list_data}") 
+            for d in self.__list_data:
+                logger.important(f"ID='{d.id}'={d.price}")
         except StopIteration:
             e = "No xlsx files found in the 'input xlsx' folder"
             logger.error(e+" → sys.exit(1) called")

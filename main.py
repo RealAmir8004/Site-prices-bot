@@ -34,17 +34,23 @@ class MainController:
             UI.critical_message("No Option selected")
             return False
         checked_button = checked_button.objectName()[-1]
-        logger.debug (f"->checked radio = {checked_button}")
         d = self.data_list.current()
         if checked_button == '6' :
             self.ui_window.spinBox.interpretText()
-            d.chosen_site = self.ui_window.spinBox.value()
-            logger.info(f"price updated from ={d.price} to ={d.chosen_site}")  
+            chosen = changed_price = self.ui_window.spinBox.value()
         else :# '1' , '2' , '3' , '4' , '5' 
-            d.chosen_site = checked_button
-            logger.info(f"price updated from ={d.price} to ={d.sites[int(d.chosen_site)].suggested_price}")  
-        DataDB.instance().update_chosen(d)
-        
+            chosen = checked_button
+            changed_price = d.sites[int(checked_button)].suggested_price
+
+        if chosen != d.chosen_site :
+            d.chosen_site = chosen
+            DataDB.instance().update_chosen(d)
+            logger.debug(f"->checked radio = {checked_button}")
+            logger.info(f"price updated from ={d.price} to ={changed_price}")
+            logger.important(f"ID='{d.id}':→{changed_price}")
+        else :
+            logger.info(f"price didnt change from previous chosed !")
+
     def handle_next_button(self):
         """save changes to memory and show next data"""
         logger.debug("Next clicked!")
@@ -70,8 +76,6 @@ class MainController:
 
 
 if __name__ == "__main__":
-    with open("app.log", "a", encoding="utf-8") as f:
-        f.write("__________________________________________________________________________________________________________________________________________\n")
     logger.info("Starting MainController")
     controller = MainController()
     controller.run()
