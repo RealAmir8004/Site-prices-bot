@@ -141,7 +141,7 @@ class DataList :
     __index = -1
     __db = DataDB()
     __list_data : list[Data]= []
-    def __init__(self , re_do = True) :
+    def __init__(self , re_do) :
         try:
             xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))
             # Copy xlsx file to output folder
@@ -188,11 +188,15 @@ class DataList :
     def current(self)-> Data :
         return self.__list_data[self.__index]
     
-    def updateAll(self):
+    def updateAll(self , retry_failures):
+        if retry_failures:
+            condition = d.sites is None or d.sites[1].name is None 
+        else:
+            condition = d.sites is None
         bar = UI.ProgressDialog()
         logger.info("→→→→→→→→→ 'All prudacts Updating'")
         for i, d in enumerate(self.__list_data):
-            if d.sites is None or d.sites[1].name is None :
+            if condition:
                 d.update()
                 self.__db.update(d)
             canceled = bar.progress(i)

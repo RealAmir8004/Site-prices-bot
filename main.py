@@ -3,23 +3,24 @@ import UI
 import sys
 from dataClass import DataList , DataDB
 from import_logging import get_logger
+import msvcrt
 # RESULTS defined in constants.py
 
 logger = get_logger(__name__)
 
 class MainController:
-    def __init__(self): # ina ghable run shoden ui anjam mishan
+    def __init__(self , use_db , updateAll ,retry_failures):
         self.app = QApplication(sys.argv)
         self.ui_window = UI.MainApp()
         try:
-            self.data_list = DataList()
+            self.data_list = DataList(use_db)
         except Exception as e:
             UI.critical_message(e)
             sys.exit(1)
 
         self.ui_window.set_len_list(self.data_list.len)
-
-        self.data_list.updateAll() # can be commented for not-updating All at first of program
+        if updateAll :
+            self.data_list.updateAll(retry_failures)
 
         self.ui_window.nextButton.clicked.connect(self.handle_next_button)
         self.ui_window.backButton.clicked.connect(self.handle_back_button)
@@ -75,8 +76,26 @@ class MainController:
         sys.exit(self.app.exec_())
 
 
+def get_bool_input(prompt: str) -> bool:
+    """Prompt the user for True/False input (1/0)."""
+    print(f"{prompt} (1 = Yes, 0 = No): ", end='', flush=True)
+    while True:
+        key = msvcrt.getch()
+        if key == b'1':
+            print('1')
+            return True
+        elif key == b'0':
+            print('0')
+            return False
+        else:
+            print("\nInvalid input. Please enter 1 or 0: ", end='', flush=True)
+
+
 if __name__ == "__main__":
+    use_db = get_bool_input("Continue previous run?")
+    updateAll = get_bool_input("Run 'UpdateAll' at first?")
+    retry_failures = get_bool_input("Retry failed updates?") if updateAll else False
     logger.info("Starting MainController")
-    controller = MainController()
+    controller = MainController(use_db , updateAll ,retry_failures)
     controller.run()
 
