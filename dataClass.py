@@ -191,20 +191,26 @@ class DataList :
         return self.__list_data[self.__index]
     
     def updateAll(self , retry_failures):
-        if retry_failures:
-            condition = d.sites is None or d.sites[1].name is None 
-        else:
-            condition = d.sites is None
-        bar = UI.ProgressDialog()
         logger.info("→→→→→→→→→ 'All prudacts Updating'")
-        for i, d in enumerate(self.__list_data):
-            if condition:
-                d.update()
-                self.__db.update(d)
-            canceled = bar.progress(i)
-            if canceled:
-                logger.info(f"Canceled!")
-                break
+        bar = UI.ProgressDialog()
+        if retry_failures:
+            for i, d in enumerate(self.__list_data):
+                if d.sites is None or d.sites[1].name is None :
+                    d.update()
+                    self.__db.update(d)
+                canceled = bar.progress(i)
+                if canceled:
+                    logger.info(f"Canceled!")
+                    break
+        else:
+            for i, d in enumerate(self.__list_data):
+                if d.sites is None :
+                    d.update()
+                    self.__db.update(d)
+                canceled = bar.progress(i)
+                if canceled:
+                    logger.info(f"Canceled!")
+                    break
             # sleep(random.uniform(2, 4))
         logger.info(f"→→→→→→→→→ 'All prudacts Updating' : procces ended : '{i}' of '{self.len}' prudacts update called")
 

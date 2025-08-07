@@ -35,7 +35,7 @@ def get_logger(name):
         logger.addHandler(important_fh)
 
     if name == "__main__" :
-        header = "_" * 113
+        header = '"' + "_" * 113 + '"'
         logger.info(header)
         logger.important(header)
     return logger
