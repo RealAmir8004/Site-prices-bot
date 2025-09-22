@@ -14,16 +14,19 @@ import sqlite3
 import json
 from sortedcontainers import SortedList
 DB_PATH = "data.db"
+ASAN_FOLDER = Path("input asan7")
+ASAN_CODES_DICT = Path("Asan Codes Dictionary") # for new products must update: without bug and duplicates
 INPUT_FOLDER = Path("input xlsx")
 OUTPUT_FOLDER = Path("output xlsx")
 
 logger = get_logger(__name__)
 
 class Data :
-    def __init__(self, id, name, price):
+    def __init__(self, id, name, price , asan):
         self.id = int(id)
         self.name = str(name)
         self.price = int(price)
+        self.asa = asan
         self.sites = None
         self.chosen_site = None
         self.torob_url = None
@@ -48,6 +51,12 @@ class Data :
         logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
 
+class Asan:
+    def __init__(self ,quantity ,fee ,last_buyed):
+        self.quantity = quantity
+        self.fee = fee
+        self.last_buyed = last_buyed
+
 
 class DataDB:
     _instance = None
@@ -69,22 +78,26 @@ class DataDB:
                 id           INTEGER PRIMARY KEY,
                 name         TEXT    NOT NULL,
                 price        INTEGER NOT NULL,
-                sites        TEXT,          -- JSON list of Site dicts
-                chosen_site  TEXT,          -- could be str or serialized int
-                torob_url    TEXT
+                sites        TEXT,
+                chosen_site  TEXT,
+                torob_url    TEXT,
+                asa          TEXT
             )
         """)
         self.conn.commit()
 
     def load_all(self):
         self.cursor.execute("""
-            SELECT id, name, price, sites, chosen_site, torob_url
+            SELECT id, name, price, sites, chosen_site, torob_url, asa
             FROM data
         """)
         rows = self.cursor.fetchall()
         result = []
-        for id_, name, price, sites_json, chosen_site, torob_url in rows:
+        for id_, name, price, sites_json, chosen_site, torob_url, asa_json in rows:
             d = Data(id_, name, price)
+            if asa_json:
+                asa_dict = json.loads(asa_json)
+                d.asa = Asan(asa_dict.get("quantity"),asa_dict.get("fee"),asa_dict.get("last_buyed"))
             if sites_json:
                 raw_sites = json.loads(sites_json)
                 d.sites = [Site.from_dict(s) for s in raw_sites]
@@ -104,11 +117,12 @@ class DataDB:
         payload = []
         for d in data_list:
             sites_json = None if d.sites is None else json.dumps([s.to_dict() for s in d.sites])
-            payload.append((d.id, d.name, d.price, sites_json, d.chosen_site, d.torob_url))
+            asa_json = None if d.asa is None else json.dumps({"quantity": d.asa.quantity,"fee": d.asa.fee,"last_buyed": d.asa.last_buyed})
+            payload.append((d.id, d.name, d.price, sites_json, d.chosen_site, d.torob_url, asa_json))
         self.cursor.executemany("""
             INSERT OR REPLACE INTO data
-            (id, name, price, sites, chosen_site, torob_url)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (id, name, price, sites, chosen_site, torob_url, asa)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """, payload)
         self.conn.commit()
 
@@ -133,6 +147,34 @@ class DataDB:
     def close(self):
         self.conn.close()
 
+
+def asan_file():
+    try:
+        map_path = next(ASAN_CODES_DICT.glob("*.json"))
+        with open(map_path, "r") as f:
+            id_code_map = json.load(f)
+    except (StopIteration, FileNotFoundError, OSError) as e:
+        logger.error(f"asan_file: JSON mapping file not found: {e}")
+        return {}
+
+    try:
+        asan_path = next(ASAN_FOLDER.glob("*.xlsx"))
+        df_asan = pandas.read_excel(asan_path)
+    except (StopIteration, FileNotFoundError, OSError) as e:
+        logger.error(f"asan_file: XLSX file not found: {e}")
+        return {}
+
+    asan_list = {}
+    for _, row in df_asan.iterrows():
+        code = str(row["کد کالا"])
+        id = id_code_map.get(code)
+        if id:
+            asan_list[id] = Asan(row["مقداراصلی"], row["فی فروش  1"], row["آخرین خرید"])
+        else:
+            logger.warning(f"Code '{code}' not found in code-id_map.json--->{id}")
+    return asan_list
+
+
 class DataList :
     """
         creat one object of this class for getting a Data list from xlsx and use it\n
@@ -143,6 +185,7 @@ class DataList :
     __list_data : list[Data]= []
     def __init__(self , re_do) :
         try:
+            mojodi_asan = asan_file()
             xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))
             # Copy xlsx file to output folder
             if OUTPUT_FOLDER.exists():
@@ -161,16 +204,19 @@ class DataList :
             availables_products = availables_products[availables_products].index            
             df_availables =df["id_product"].isin(availables_products)
 
+            df_mojodi_asan = df["id_product"].isin(mojodi_asan.keys())
+            
             # saving self.output_df to "ram" for using in saveData :
-            self.output_df = df[df_active & df_availables]
+            self.output_df = df[(df_active & df_availables) | df_mojodi_asan]
             if re_do and Path(DB_PATH).exists():
                 # trying to acces db 
                 self.__list_data = self.__db.load_all()
                 logger.info(f"list_data exported from db='{DB_PATH}'")
             else :
-                # filteering table to Only select "id_product", "name", "price" from "active" rows :
-                filtered = df.loc[(df["active"] == 1) & df_availables , ["id_product", "name", "price"]]
-                self.__list_data = [Data(row.id_product, row.name, row.price) for row in filtered.itertuples()]
+                # filteering table to Only select "id_product", "name", "price"   from "active" or "mojodi_asan" rows:
+                # hint: ~df["active"].isna()  &  df["active"] == 1   are for creating data just one per rows of product (product have some rows)
+                filtered = df.loc[((df["active"] == 1) & df_availables) | (df_mojodi_asan & ~df["active"].isna()) , ["id_product", "name", "price"]]
+                self.__list_data = [Data(row.id_product, row.name, row.price , mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
                 logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
                 self.__db.save_all(self.__list_data)
                 logger.important("New __list_data:")  
