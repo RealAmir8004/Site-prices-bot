@@ -22,17 +22,18 @@ OUTPUT_FOLDER = Path("output xlsx")
 logger = get_logger(__name__)
 
 class Data :
-    def __init__(self, id, name, price , asan):
+    def __init__(self, id, name, price ,quantity , asan):
         self.id = int(id)
         self.name = str(name)
         self.price = int(price)
+        self.quantity = int(quantity)
         self.asa = asan
         self.sites = None
         self.chosen_site = None
         self.torob_url = None
 
     def __repr__(self):
-        return (f"(id:'{self.id}', name:'{self.name!r}', price:{self.price}, chosen_site={self.chosen_site!r}, scraped?={bool(self.torob_url)})")
+        return (f"id='{self.id}, name={self.name!r}, price={self.price}, quantity={self.quantity}, asa={self.asa}, chosen_site={self.chosen_site!r}, scraped?={bool(self.torob_url)})")
 
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
@@ -57,6 +58,9 @@ class Asan:
         self.fee = fee
         self.last_buyed = last_buyed
 
+    def __repr__(self):
+        return (f"<quantity={self.quantity}, fee={self.fee}, last_buyed={self.last_buyed}>")
+
 
 class DataDB:
     _instance = None
@@ -78,6 +82,7 @@ class DataDB:
                 id           INTEGER PRIMARY KEY,
                 name         TEXT    NOT NULL,
                 price        INTEGER NOT NULL,
+                quantity     INTEGER NOT NULL,
                 sites        TEXT,
                 chosen_site  TEXT,
                 torob_url    TEXT,
@@ -88,13 +93,13 @@ class DataDB:
 
     def load_all(self):
         self.cursor.execute("""
-            SELECT id, name, price, sites, chosen_site, torob_url, asa
+            SELECT id, name, price, quantity, sites, chosen_site, torob_url, asa
             FROM data
         """)
         rows = self.cursor.fetchall()
         result = []
-        for id_, name, price, sites_json, chosen_site, torob_url, asa_json in rows:
-            d = Data(id_, name, price)
+        for id_, name, price, quantity, sites_json, chosen_site, torob_url, asa_json in rows:
+            d = Data(id_, name, price, quantity)
             if asa_json:
                 asa_dict = json.loads(asa_json)
                 d.asa = Asan(asa_dict.get("quantity"),asa_dict.get("fee"),asa_dict.get("last_buyed"))
@@ -118,11 +123,11 @@ class DataDB:
         for d in data_list:
             sites_json = None if d.sites is None else json.dumps([s.to_dict() for s in d.sites])
             asa_json = None if d.asa is None else json.dumps({"quantity": d.asa.quantity,"fee": d.asa.fee,"last_buyed": d.asa.last_buyed})
-            payload.append((d.id, d.name, d.price, sites_json, d.chosen_site, d.torob_url, asa_json))
+            payload.append((d.id, d.name, d.price, d.quantity, sites_json, d.chosen_site, d.torob_url, asa_json))
         self.cursor.executemany("""
             INSERT OR REPLACE INTO data
-            (id, name, price, sites, chosen_site, torob_url, asa)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (id, name, price, quantity, sites, chosen_site, torob_url, asa)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, payload)
         self.conn.commit()
 
@@ -200,8 +205,8 @@ class DataList :
             active_products = active_products[active_products].index
             df_active = df["id_product"].isin(active_products)
 
-            availables_products = df.groupby("id_product")["quantity"].apply(lambda q: (q > 0).any())
-            availables_products = availables_products[availables_products].index            
+            product_quantitys = df.groupby("id_product")["quantity"].sum()
+            availables_products = product_quantitys[product_quantitys > 0].index         
             df_availables =df["id_product"].isin(availables_products)
 
             df_mojodi_asan = df["id_product"].isin(mojodi_asan.keys())
@@ -216,12 +221,12 @@ class DataList :
                 # filteering table to Only select "id_product", "name", "price"   from "active" or "mojodi_asan" rows:
                 # hint: ~df["active"].isna()  &  df["active"] == 1   are for creating data just one per rows of product (product have some rows)
                 filtered = df.loc[((df["active"] == 1) & df_availables) | (df_mojodi_asan & ~df["active"].isna()) , ["id_product", "name", "price"]]
-                self.__list_data = [Data(row.id_product, row.name, row.price , mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
+                self.__list_data = [Data(row.id_product, row.name, row.price , product_quantitys.get(row.id_product), mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
                 logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
                 self.__db.save_all(self.__list_data)
                 logger.important("New __list_data:")  
                 for d in self.__list_data:
-                    logger.important(f"ID='{d.id}'={d.price}")
+                    logger.important(f"ID='{d.id}'={d.price} '_' {d.quantity} '_' {d.asa}")
                 logger.important("----------------------------------------------------------")  
             self.len = len(self.__list_data)
             logger.debug(f"list_data=(len= {self.len}) {self.__list_data}") 
