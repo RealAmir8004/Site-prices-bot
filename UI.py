@@ -1,12 +1,39 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QMainWindow , QProgressDialog , QMessageBox , QApplication
+from PyQt5.QtWidgets import QMainWindow ,QDialog ,QProgressDialog , QMessageBox , QApplication
 from PyQt5.QtCore import pyqtSlot , pyqtSignal , QLocale
 from constants import RESULTS
 from import_logging import get_logger
 import sys
-from UI_main import Ui_MainWindow
+from UI_mainWindow import Ui_MainWindow
+from UI_translateDialog import Ui_TranslateDialog
 
 logger = get_logger(__name__)
+
+class TranslateApp(QDialog, Ui_TranslateDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setupUi(self)
+
+        self.btnAddRow.clicked.connect(self.add_row)
+        self.btnDeleteRow.clicked.connect(self.delete_row)
+
+    def add_row(self):
+        row = self.tableWidget.rowCount()
+        self.tableWidget.insertRow(row)
+    
+    def delete_row(self):
+        row = self.tableWidget.currentRow()
+        if row >= 0:
+            self.tableWidget.removeRow(row)
+
+    def get_table_data(self):
+        """Return table contents as a list of (col1, col2)."""
+        data = []
+        for row in range(self.tableWidget.rowCount()):
+            col1 = self.tableWidget.item(row, 0).text() if self.tableWidget.item(row, 0) else ""
+            col2 = self.tableWidget.item(row, 1).text() if self.tableWidget.item(row, 1) else ""
+            data.append((col1, col2))
+        return data
 
 class MainApp(QMainWindow, Ui_MainWindow):
     _instance = None
@@ -31,6 +58,16 @@ class MainApp(QMainWindow, Ui_MainWindow):
 
     def __setup_connections(self):
         self.dataChanged.connect(self.update_table) 
+        self.action_translate.triggered.connect(self.open_translate_dialog)
+    
+    def open_translate_dialog(self):
+        dlg = TranslateApp(self)   # parent = main window
+        dlg.exec_()
+        
+        data = dlg.get_table_data()
+        print("Saved to db")
+        print("Table contents:", data)
+
 
     def set_len_list(self , give_me_len_list : int):
         self.len_list = give_me_len_list
