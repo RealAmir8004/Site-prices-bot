@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'translate-2.ui'
+# Form implementation generated from reading ui file 'translate-3.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -23,9 +23,10 @@ class Ui_TranslateDialog(object):
         self.verticalLayout = QtWidgets.QVBoxLayout(TranslateDialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.tableWidget = QtWidgets.QTableWidget(TranslateDialog)
+        self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.AllEditTriggers)
+        self.tableWidget.setRowCount(1)
         self.tableWidget.setColumnCount(2)
         self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setRowCount(0)
         item = QtWidgets.QTableWidgetItem()
         item.setText("کد آسان")
         font = QtGui.QFont()
@@ -40,14 +41,6 @@ class Ui_TranslateDialog(object):
         self.tableWidget.horizontalHeader().setSortIndicatorShown(True)
         self.tableWidget.horizontalHeader().setStretchLastSection(True)
         self.verticalLayout.addWidget(self.tableWidget)
-        self.btnAddRow = QtWidgets.QPushButton(TranslateDialog)
-        self.btnAddRow.setText("Add Row")
-        self.btnAddRow.setObjectName("btnAddRow")
-        self.verticalLayout.addWidget(self.btnAddRow)
-        self.btnDeleteRow = QtWidgets.QPushButton(TranslateDialog)
-        self.btnDeleteRow.setText("Delete Row")
-        self.btnDeleteRow.setObjectName("btnDeleteRow")
-        self.verticalLayout.addWidget(self.btnDeleteRow)
         QtCore.QMetaObject.connectSlotsByName(TranslateDialog)
         self.tableWidget.setSortingEnabled(True)
 

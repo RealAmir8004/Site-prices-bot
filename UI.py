@@ -1,6 +1,6 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QMainWindow ,QDialog ,QProgressDialog , QMessageBox , QApplication
-from PyQt5.QtCore import pyqtSlot , pyqtSignal , QLocale
+from PyQt5.QtWidgets import QMainWindow ,QTableWidget , QDialog ,QProgressDialog , QMessageBox , QApplication
+from PyQt5.QtCore import Qt , pyqtSlot , pyqtSignal , QLocale
 from constants import RESULTS
 from import_logging import get_logger
 import sys
@@ -14,17 +14,23 @@ class TranslateApp(QDialog, Ui_TranslateDialog):
         super().__init__(parent)
         self.setupUi(self)
 
-        self.btnAddRow.clicked.connect(self.add_row)
-        self.btnDeleteRow.clicked.connect(self.delete_row)
+        self.tableWidget.keyPressEvent = self.handle_keypress
 
-    def add_row(self):
-        row = self.tableWidget.rowCount()
-        self.tableWidget.insertRow(row)
-    
-    def delete_row(self):
+    def handle_keypress(self, event):
         row = self.tableWidget.currentRow()
-        if row >= 0:
-            self.tableWidget.removeRow(row)
+        col = self.tableWidget.currentColumn()
+
+        if event.key() == Qt.Key_Delete:
+            # Delete current row
+            if row >= 0:
+                self.tableWidget.removeRow(row)
+        elif event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            if row == self.tableWidget.rowCount() - 1:
+                self.tableWidget.insertRow(self.tableWidget.rowCount())
+            self.tableWidget.setCurrentCell(min(row + 1, self.tableWidget.rowCount() - 1), col)
+        else:
+            # Default handling
+            super(QTableWidget, self.tableWidget).keyPressEvent(event)
 
     def get_table_data(self):
         """Return table contents as a list of (col1, col2)."""
@@ -61,7 +67,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         self.action_translate.triggered.connect(self.open_translate_dialog)
     
     def open_translate_dialog(self):
-        dlg = TranslateApp(self)   # parent = main window
+        dlg = TranslateApp(self)
         dlg.exec_()
         
         data = dlg.get_table_data()
