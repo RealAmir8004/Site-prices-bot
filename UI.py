@@ -1,5 +1,5 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QMainWindow ,QTableWidget , QDialog ,QProgressDialog , QMessageBox , QApplication
+from PyQt5.QtWidgets import QMainWindow ,QTableWidget , QDialog ,QProgressDialog , QMessageBox , QApplication ,QTableWidgetItem
 from PyQt5.QtCore import Qt , pyqtSlot , pyqtSignal , QLocale
 from constants import RESULTS
 from import_logging import get_logger
@@ -10,11 +10,19 @@ from UI_translateDialog import Ui_TranslateDialog
 logger = get_logger(__name__)
 
 class TranslateApp(QDialog, Ui_TranslateDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, initial_data: dict[int, int] | None = None):
         super().__init__(parent)
         self.setupUi(self)
-
         self.tableWidget.keyPressEvent = self.handle_keypress
+        if initial_data:
+            self.populate_table(initial_data)
+
+    def populate_table(self, mapping: dict[int, int]):
+        self.tableWidget.setRowCount(0)
+        for row_idx, (code, idv) in enumerate(mapping.items()):
+            self.tableWidget.insertRow(row_idx)
+            self.tableWidget.setItem(row_idx, 0, QTableWidgetItem(str(code)))
+            self.tableWidget.setItem(row_idx, 1, QTableWidgetItem(str(idv)))
 
     def handle_keypress(self, event):
         row = self.tableWidget.currentRow()
@@ -33,17 +41,30 @@ class TranslateApp(QDialog, Ui_TranslateDialog):
             super(QTableWidget, self.tableWidget).keyPressEvent(event)
 
     def get_table_data(self):
-        """Return table contents as a list of (col1, col2)."""
-        data = []
+        data = {}
         for row in range(self.tableWidget.rowCount()):
-            col1 = self.tableWidget.item(row, 0).text() if self.tableWidget.item(row, 0) else ""
-            col2 = self.tableWidget.item(row, 1).text() if self.tableWidget.item(row, 1) else ""
-            data.append((col1, col2))
+            code_item = self.tableWidget.item(row, 0)
+            id_item = self.tableWidget.item(row, 1)
+            if code_item is None or id_item is None:
+                continue
+            code_text = code_item.text().strip()
+            id_text = id_item.text().strip()
+            if not code_text or not id_text:
+                continue
+            try:
+                code = int(code_text)
+                idv = int(id_text)
+            except ValueError:
+                logger.warning(f"Skipping row {row}: non-integer values ({code_text!r}, {id_text!r})")
+                continue
+            data[code] = idv
         return data
 
 class MainApp(QMainWindow, Ui_MainWindow):
     _instance = None
     dataChanged = pyqtSignal(tuple)
+    translateDataReady = pyqtSignal(dict)
+    translatedataRequested = pyqtSignal()
     
     @classmethod
     def instance(cls):
@@ -64,15 +85,15 @@ class MainApp(QMainWindow, Ui_MainWindow):
 
     def __setup_connections(self):
         self.dataChanged.connect(self.update_table) 
-        self.action_translate.triggered.connect(self.open_translate_dialog)
+        self.action_translate.triggered.connect(self.translatedataRequested.emit)
     
-    def open_translate_dialog(self):
-        dlg = TranslateApp(self)
+    def open_translate_dialog(self , old_data):
+        logger.info("translation dialog opened...")
+        dlg = TranslateApp(self, old_data)
         dlg.exec_()
-        
         data = dlg.get_table_data()
-        print("Saved to db")
-        print("Table contents:", data)
+        self.translateDataReady.emit(data)
+        logger.info(f"Translated code:id = {data}")
 
 
     def set_len_list(self , give_me_len_list : int):

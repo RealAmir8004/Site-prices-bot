@@ -111,7 +111,6 @@ class DataDB:
 
     def save_all(self, data_list):
         self.cursor.execute("DELETE FROM data")
-        # Delete every existed row  ↑
         payload = []
         for d in data_list:
             sites_json = None if d.sites is None else json.dumps([s.to_dict() for s in d.sites])
@@ -142,19 +141,39 @@ class DataDB:
         """, (sites_json, d.torob_url, d.id))
         self.conn.commit()
 
+    def _create_translation_table(self):
+        self.cursor.execute("""
+            CREATE TABLE IF NOT EXISTS translations (
+                code INTEGER PRIMARY KEY,
+                id INTEGER NOT NULL
+            )
+        """)
+        self.conn.commit()
+
+    def load_translation_data(self):
+        self.cursor.execute("""
+            SELECT code, id
+            FROM translations
+        """)
+        rows = self.cursor.fetchall()
+        return {code: id for code, id in rows}
+
+    def save_translation_data(self, data):
+
+        self.cursor.execute("DELETE FROM translations")
+        payload = data.items()
+        self.cursor.executemany("""
+            INSERT INTO translations (code, id)
+            VALUES (?, ?)
+        """, payload)
+        self.conn.commit()
+
     def close(self):
         self.conn.close()
 
 
-def asan_file():
-    try:
-        map_path = next(ASAN_CODES_DICT.glob("*.json"))
-        with open(map_path, "r") as f:
-            id_code_map = json.load(f)
-    except (StopIteration, FileNotFoundError, OSError) as e:
-        logger.error(f"asan_file: JSON mapping file not found: {e}")
-        return {}
-
+def asan_file(id_code_map : dict[int, int]):
+    """Load Asan data from Excel file and translate it"""
     try:
         asan_path = next(ASAN_FOLDER.glob("*.xlsx"))
         df_asan = pandas.read_excel(asan_path)
@@ -163,13 +182,14 @@ def asan_file():
         return {}
 
     asan_list = {}
+    report =[]
     for _, row in df_asan.iterrows():
         code = str(row["کد کالا"])
         id = id_code_map.get(code)
         if id:
             asan_list[id] = Asan(row["مقداراصلی"], row["فی فروش  1"], row["آخرین خرید"])
-        else:
-            logger.warning(f"Code '{code}' not found in code-id_map.json--->{id}")
+        report.append(f"{code} : {id}")
+    logger.debug("id:code dict= " + " | ".join(report))
     return asan_list
 
 
@@ -183,7 +203,7 @@ class DataList :
     def __init__(self , db , re_do) :
         self.__db = db
         try:
-            mojodi_asan = asan_file()
+            mojodi_asan = asan_file(self.__db.load_translation_data())
             xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))
             # Copy xlsx file to output folder
             if OUTPUT_FOLDER.exists():
