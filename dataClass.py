@@ -63,19 +63,12 @@ class Asan:
 
 
 class DataDB:
-    _instance = None
     def __init__(self, db_path=DB_PATH):
-        if DataDB._instance is not None:
-            raise RuntimeError("Use MainApp.instance() to get the singleton instance.")
         self.conn = sqlite3.connect(str(db_path))
         self.cursor = self.conn.cursor()
         self._create_table()
-        DataDB._instance = self
+        self._create_translation_table()
     
-    @classmethod
-    def instance(cls):
-        return cls._instance
-
     def _create_table(self):
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS data (
@@ -186,9 +179,9 @@ class DataList :
         class contains a list[Data]
     """
     __index = -1
-    __db = DataDB()
     __list_data : list[Data]= []
-    def __init__(self , re_do) :
+    def __init__(self , db , re_do) :
+        self.__db = db
         try:
             mojodi_asan = asan_file()
             xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))

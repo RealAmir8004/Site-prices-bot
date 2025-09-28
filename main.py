@@ -10,10 +10,11 @@ logger = get_logger(__name__)
 
 class MainController:
     def __init__(self , use_db , updateAll ,retry_failures):
+        self.db = DataDB()
         self.app = QApplication(sys.argv)
         self.ui_window = UI.MainApp()
         try:
-            self.data_list = DataList(use_db)
+            self.data_list = DataList(self.db , use_db)
         except Exception as e:
             UI.critical_message(e)
             sys.exit(1)
@@ -46,7 +47,7 @@ class MainController:
 
         if chosen != d.chosen_site :
             d.chosen_site = chosen
-            DataDB.instance().update_chosen(d)
+            self.db.update_chosen(d)
             logger.info(f"price updated from ={d.price} to ={changed_price}")
             logger.important(f"ID='{d.id}':→{changed_price}")
         else :
