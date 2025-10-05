@@ -114,34 +114,41 @@ class MainApp(QMainWindow, Ui_MainWindow):
         if index < 0 :
             index = self.len_list+index
         self.label_productCount.setText(f"{index+1}/{self.len_list} → id={data.id}")
+        if data.active:
+            self.checkBox_Active.setChecked(True)
+        else:
+            self.checkBox_Active.setChecked(False)
         self.label_url.setText(f'<a href="{data.torob_url}">{data.torob_url}</a>') 
+        self.label_asanQuantity.setText(self.local.toString(data.asa.quantity))
+        self.label_lastSell.setText(self.local.toString(data.asa.fee))
+        self.label_lastBuy.setText(self.local.toString(data.asa.last_buyed))
+        self.label_prevQuantity.setText(self.local.toString(data.quantity))
 
         for i, site in enumerate(data.sites):  
-            bg_color ="background-color: red;" if site.badged else "background-color: white;"
             if site.name == None :
                 getattr(self, f"label_{i}").setText('')
                 getattr(self, f"radioButton_{i}").setText('')
                 getattr(self, f"radioButton_{i}").setEnabled(False)
+                getattr(self, f"label_Tick_{i}").setText('')
             else :
                 getattr(self, f"label_{i}").setText(site.name)
                 if site.name == "اسپارک دیجی":
                     getattr(self, f"radioButton_{i}").setText(site.suggested_price)
-                    bg_color ="background-color: green;"
                     dont_radio = i
+                    getattr(self, f"label_Tick_{i}").setStyleSheet('')
+                    getattr(self, f"label_Tick_{i}").setText('SP')
                 else :
                     getattr(self, f"radioButton_{i}").setText(self.local.toString(site.suggested_price))
+                    if site.badged:
+                        getattr(self, f"label_Tick_{i}").setStyleSheet("color: red;")
+                        getattr(self, f"label_Tick_{i}").setText('✔')
+                    else:
+                        getattr(self, f"label_Tick_{i}").setText('')
                 getattr(self, f"radioButton_{i}").setEnabled(True)
             getattr(self, f"label_{i}0").setText(self.local.toString(site.price))
             getattr(self, f"label_{i}1").setText(site.city)
             getattr(self, f"label_{i}2").setText(site.score_text)
             getattr(self, f"label_{i}3").setText(site.last_change)
-
-            getattr(self, f"label_{i}").setStyleSheet(bg_color)
-            getattr(self, f"label_{i}1").setStyleSheet(bg_color)
-            getattr(self, f"label_{i}2").setStyleSheet(bg_color)
-            getattr(self, f"label_{i}3").setStyleSheet(bg_color)
-            getattr(self, f"label_{i}0").setStyleSheet(bg_color)
-            getattr(self, f"radioButton_{i}").setStyleSheet(bg_color)
 
         try:
             self.spinBox.setValue(data.sites[0].suggested_price)
@@ -150,9 +157,13 @@ class MainApp(QMainWindow, Ui_MainWindow):
                 self.spinBox.setValue(data.sites[1].suggested_price)
             except TypeError:
                 pass
-        self.__set_radio_checked(data,  dont_radio)
+        self.__set_previous_changes(data,  dont_radio)
 
-    def __set_radio_checked(self , data , dont_radio):
+    def __set_previous_changes(self , data , dont_radio):
+        if data.new_quantity:
+            self.spinBox_newQuantity.setValue(data.new_quantity)
+        else :
+            self.spinBox_newQuantity.setValue(data.quantity)
         chosen = data.chosen_site
         if chosen is None :
             getattr(self, f"radioButton_{dont_radio}").setChecked(True)
