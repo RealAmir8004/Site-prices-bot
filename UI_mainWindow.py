@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'version7-3.ui'
+# Form implementation generated from reading ui file 'version7-4.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -53,7 +53,7 @@ class Ui_MainWindow(object):
 "    border: 1px solid black;\n"
 "}\n"
 "")
-        self.checkBox_Active.setText("Active")
+        self.checkBox_Active.setText("UnActive")
         self.checkBox_Active.setObjectName("checkBox_Active")
         self.horizontalLayout.addWidget(self.checkBox_Active)
         self.label_productCount = QtWidgets.QLabel(self.centralwidget)
@@ -546,19 +546,12 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.nextButton)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 906, 21))
-        self.menubar.setObjectName("menubar")
-        self.menu_defaults = QtWidgets.QMenu(self.menubar)
-        self.menu_defaults.setTitle("پیش فرض ها")
-        self.menu_defaults.setObjectName("menu_defaults")
-        self.menu_inputs = QtWidgets.QMenu(self.menubar)
-        self.menu_inputs.setTitle("ورودی")
-        self.menu_inputs.setObjectName("menu_inputs")
-        MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
+        self.statusBar = QtWidgets.QStatusBar(MainWindow)
+        self.statusBar.setObjectName("statusBar")
+        MainWindow.setStatusBar(self.statusBar)
+        self.menuBar = QtWidgets.QMenuBar(MainWindow)
+        self.menuBar.setObjectName("menuBar")
+        MainWindow.setMenuBar(self.menuBar)
         self.action_translate = QtWidgets.QAction(MainWindow)
         self.action_translate.setText("ترجمه اجناس")
         self.action_translate.setObjectName("action_translate")
@@ -571,12 +564,6 @@ class Ui_MainWindow(object):
         self.action_inputSite = QtWidgets.QAction(MainWindow)
         self.action_inputSite.setText("ورودی موجودی سایت")
         self.action_inputSite.setObjectName("action_inputSite")
-        self.menu_defaults.addAction(self.action_translate)
-        self.menu_defaults.addAction(self.action_torobExele)
-        self.menu_inputs.addAction(self.action_inputAsan)
-        self.menu_inputs.addAction(self.action_inputSite)
-        self.menubar.addAction(self.menu_defaults.menuAction())
-        self.menubar.addAction(self.menu_inputs.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
