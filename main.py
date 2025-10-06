@@ -52,14 +52,23 @@ class MainController:
         else :# '1' , '2' , '3' , '4' , '5' 
             chosen = checked_button
             changed_price = d.sites[int(checked_button)].suggested_price
-
+        log_changes = []
         if chosen != d.chosen_site :
             d.chosen_site = chosen
             self.db.update_chosen(d)
-            logger.info(f"price updated from ={d.price} to ={changed_price}")
-            logger.important(f"ID='{d.id}':→{changed_price}")
+            log_changes.append(f"new_price:→ {changed_price}")
+        self.ui_window.spinBox_newQuantity.interpretText()
+        new_quantity = self.ui_window.spinBox_newQuantity.value()
+        if new_quantity != d.new_quantity:
+            d.new_quantity = new_quantity
+            self.db.update_quantity(d)
+            log_changes.append(f"new_quantity:→{new_quantity}")
+        if log_changes:
+            combined = " | ".join(log_changes)
+            logger.info(combined)
+            logger.important(f"ID='{d.id}': {combined}")
         else :
-            logger.info(f"price didnt change from previous chosed !")
+            logger.info("no changes from previous choice for price or quantity")
 
     def handle_next_button(self):
         """save changes to memory and show next data"""

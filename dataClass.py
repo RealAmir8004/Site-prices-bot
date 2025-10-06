@@ -22,18 +22,20 @@ OUTPUT_FOLDER = Path("output xlsx")
 logger = get_logger(__name__)
 
 class Data :
-    def __init__(self, id, name, price ,quantity , asan):
+    def __init__(self, id, name, price , active, quantity, asan=None):
         self.id = int(id)
         self.name = str(name)
         self.price = int(price)
+        self.active = bool(active)
         self.quantity = int(quantity)
         self.asa = asan
         self.sites = None
         self.chosen_site = None
         self.torob_url = None
+        self.new_quantity = self.quantity
 
     def __repr__(self):
-        return (f"id='{self.id}, name={self.name!r}, price={self.price}, quantity={self.quantity}, asa={self.asa}, chosen_site={self.chosen_site!r}, scraped?={bool(self.torob_url)})")
+        return (f"id='{self.id}, name={self.name!r}, price={self.price}, quantity={self.quantity}, new_quantity={self.new_quantity}, asa={self.asa}, chosen_site={self.chosen_site!r}, scraped?={bool(self.torob_url)}, active={self.active})")
 
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
@@ -75,7 +77,9 @@ class DataDB:
                 id           INTEGER PRIMARY KEY,
                 name         TEXT    NOT NULL,
                 price        INTEGER NOT NULL,
+                active       BOOLEAN NOT NULL,
                 quantity     INTEGER NOT NULL,
+                new_quantity INTEGER,
                 sites        TEXT,
                 chosen_site  TEXT,
                 torob_url    TEXT,
@@ -86,13 +90,14 @@ class DataDB:
 
     def load_all(self):
         self.cursor.execute("""
-            SELECT id, name, price, quantity, sites, chosen_site, torob_url, asa
+            SELECT id, name, price, active, quantity, new_quantity, sites, chosen_site, torob_url, asa
             FROM data
         """)
         rows = self.cursor.fetchall()
         result = []
-        for id_, name, price, quantity, sites_json, chosen_site, torob_url, asa_json in rows:
-            d = Data(id_, name, price, quantity)
+        for id_, name, price, active, quantity, new_quantity, sites_json, chosen_site, torob_url, asa_json in rows:
+            d = Data(id_, name, price, active, quantity)
+            d.new_quantity = new_quantity
             if asa_json:
                 asa_dict = json.loads(asa_json)
                 d.asa = Asan(asa_dict.get("quantity"),asa_dict.get("fee"),asa_dict.get("last_buyed"))
@@ -115,11 +120,11 @@ class DataDB:
         for d in data_list:
             sites_json = None if d.sites is None else json.dumps([s.to_dict() for s in d.sites])
             asa_json = None if d.asa is None else json.dumps({"quantity": d.asa.quantity,"fee": d.asa.fee,"last_buyed": d.asa.last_buyed})
-            payload.append((d.id, d.name, d.price, d.quantity, sites_json, d.chosen_site, d.torob_url, asa_json))
+            payload.append((d.id, d.name, d.price, d.active, d.quantity, d.new_quantity, sites_json, d.chosen_site, d.torob_url, asa_json))
         self.cursor.executemany("""
             INSERT OR REPLACE INTO data
-            (id, name, price, quantity, sites, chosen_site, torob_url, asa)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (id, name, price, active, quantity, new_quantity, sites, chosen_site, torob_url, asa)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, payload)
         self.conn.commit()
 
@@ -129,6 +134,14 @@ class DataDB:
             SET chosen_site = ?
             WHERE id = ?
         """, (d.chosen_site, d.id))
+        self.conn.commit()
+
+    def update_quantity(self, d):
+        self.cursor.execute("""
+            UPDATE data
+            SET new_quantity = ?
+            WHERE id = ?
+        """, (d.new_quantity, d.id))
         self.conn.commit()
 
     def update(self, d):
@@ -218,7 +231,8 @@ class DataList :
             active_products = active_products[active_products].index
             df_active = df["id_product"].isin(active_products)
 
-            product_quantitys = df.groupby("id_product")["quantity"].sum()
+            quantity_default_rows = df[df["default_on"] == 1]
+            product_quantitys = quantity_default_rows.set_index("id_product")["quantity"]
             availables_products = product_quantitys[product_quantitys > 0].index         
             df_availables =df["id_product"].isin(availables_products)
 
@@ -233,8 +247,8 @@ class DataList :
             else :
                 # filteering table to Only select "id_product", "name", "price"   from "active" or "mojodi_asan" rows:
                 # hint: ~df["active"].isna()  &  df["active"] == 1   are for creating data just one per rows of product (product have some rows)
-                filtered = df.loc[((df["active"] == 1) & df_availables) | (df_mojodi_asan & ~df["active"].isna()) , ["id_product", "name", "price"]]
-                self.__list_data = [Data(row.id_product, row.name, row.price , product_quantitys.get(row.id_product), mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
+                filtered = df.loc[((df["active"] == 1) & df_availables) | (df_mojodi_asan & df["active"].notna()) , ["id_product", "name", "price", "active"]]
+                self.__list_data = [Data(row.id_product, row.name, row.price , row.active, product_quantitys.get(row.id_product), mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
                 logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
                 self.__db.save_all(self.__list_data)
                 logger.important("New __list_data:")  
@@ -311,31 +325,39 @@ class DataList :
             prev_id = None
             for row in df.itertuples(index=False):
                 curr_id = row.id_product
+                row_dict = row._asdict()
                 if prev_id == curr_id : # combination row
                     if remain :
-                        new_rows.append(row._asdict())
+                        if row_dict["default_on"] == 1 and data.new_quantity != data.quantity:
+                            row_dict["quantity"] = data.new_quantity
+                            logger.info(f"id='{curr_id}' quantity updated to {data.new_quantity}")
+                        new_rows.append(row_dict)
                     continue
                 prev_id = curr_id
                 data = data_map.get(curr_id)
                 chosen = data.chosen_site
-                if chosen is None: # radio not checked before save button 
-                    logger.warning(f"id='{curr_id}' deleted from xlsx becuase: radio not checked before save button")
+                if chosen is None: # not reached before save button 
+                    logger.debug(f"id='{curr_id}' deleted from xlsx becuase: not reached before save button")
                     remain = False
                     continue  # Remove
-                row_dict = row._asdict()
                 if isinstance(chosen, str):
                     site = data.sites[int(chosen)]
                     if isinstance(site.suggested_price, str): # "dont change price"
-                        logger.debug(f"id='{curr_id}' deleted from xlsx becuase: radio = 'dont change price'")
                         remain = False
-                        continue
-                    updated_price = site.suggested_price
+                    else:
+                        row_dict["price"] = site.suggested_price
+                        remain = True
                 elif isinstance(chosen, int): # custom price 
-                    updated_price = chosen 
-                row_dict["price"] = updated_price 
-                remain = True
-                new_rows.append(row_dict)
-                logger.info(f"id='{curr_id}' remained in xlsx : price updated to {updated_price}")
+                    row_dict["price"] = chosen 
+                    remain = True
+                if remain:
+                    logger.info(f"id='{curr_id}' price updated to {row_dict["price"]}")
+                    new_rows.append(row_dict)
+                elif data.new_quantity != data.quantity:
+                    remain = True
+                    new_rows.append(row_dict)
+                else:
+                    logger.debug(f"id='{curr_id}' deleted from xlsx becuase: not any change accepted")
             # Save (without extra changings (header style)) :
             wb = load_workbook(self.output_path)
             ws = wb.active
