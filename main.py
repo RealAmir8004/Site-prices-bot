@@ -26,16 +26,8 @@ class MainController:
         self.ui_window.nextButton.clicked.connect(self.handle_next_button)
         self.ui_window.backButton.clicked.connect(self.handle_back_button)
         self.ui_window.saveButton.clicked.connect(self.handle_save_button)
-        self.ui_window.translateDataReady.connect(self.save_translation_data_to_db)
-        self.ui_window.translatedataRequested.connect(self.load_translation_data_from_db)
         
         self.ui_window.update_table(self.data_list.showData(True))
-
-    def save_translation_data_to_db(self, data):
-        self.db.save_translation_data(data)
-
-    def load_translation_data_from_db(self):
-        self.ui_window.open_translate_dialog(self.db.load_translation_data())
 
     def save_user_input(self):
         checked_button = self.ui_window.radioButtonGroup.checkedButton()

@@ -69,7 +69,6 @@ class DataDB:
         self.conn = sqlite3.connect(str(db_path))
         self.cursor = self.conn.cursor()
         self._create_table()
-        self._create_translation_table()
     
     def _create_table(self):
         self.cursor.execute("""
@@ -154,33 +153,6 @@ class DataDB:
         """, (sites_json, d.torob_url, d.id))
         self.conn.commit()
 
-    def _create_translation_table(self):
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS translations (
-                code INTEGER PRIMARY KEY,
-                id INTEGER NOT NULL
-            )
-        """)
-        self.conn.commit()
-
-    def load_translation_data(self):
-        self.cursor.execute("""
-            SELECT code, id
-            FROM translations
-        """)
-        rows = self.cursor.fetchall()
-        return {code: id for code, id in rows}
-
-    def save_translation_data(self, data):
-
-        self.cursor.execute("DELETE FROM translations")
-        payload = data.items()
-        self.cursor.executemany("""
-            INSERT INTO translations (code, id)
-            VALUES (?, ?)
-        """, payload)
-        self.conn.commit()
-
     def close(self):
         self.conn.close()
 
@@ -216,7 +188,6 @@ class DataList :
     def __init__(self , db , re_do) :
         self.__db = db
         try:
-            mojodi_asan = asan_file(self.__db.load_translation_data())
             xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))
             # Copy xlsx file to output folder
             if OUTPUT_FOLDER.exists():
@@ -236,6 +207,8 @@ class DataList :
             availables_products = product_quantitys[product_quantitys > 0].index         
             df_availables =df["id_product"].isin(availables_products)
 
+            refrence_id_series = df[df["active"] == 1].set_index("reference")["id_product"]
+            mojodi_asan = asan_file(refrence_id_series.to_dict())
             df_mojodi_asan = df["id_product"].isin(mojodi_asan.keys())
             
             # saving self.output_df to "ram" for using in saveData :
