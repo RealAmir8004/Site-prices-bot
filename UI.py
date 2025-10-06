@@ -50,7 +50,7 @@ class MainApp(QMainWindow, Ui_MainWindow):
         if index < 0 :
             index = self.len_list+index
         self.label_productCount.setText(f"{index+1}/{self.len_list} → id={data.id}")
-        if data.active:
+        if not data.active:
             self.checkBox_Active.setChecked(True)
         else:
             self.checkBox_Active.setChecked(False)

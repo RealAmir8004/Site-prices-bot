@@ -22,13 +22,13 @@ OUTPUT_FOLDER = Path("output xlsx")
 logger = get_logger(__name__)
 
 class Data :
-    def __init__(self, id, name, price , active, quantity, asan=None):
+    def __init__(self, id, name, price , active, quantity, asan):
         self.id = int(id)
         self.name = str(name)
         self.price = int(price)
         self.active = bool(active)
         self.quantity = int(quantity)
-        self.asa = asan
+        self.asa = asan or Asan(0, 0, 0)
         self.sites = None
         self.chosen_site = None
         self.torob_url = None
@@ -61,7 +61,7 @@ class Asan:
         self.last_buyed = last_buyed
 
     def __repr__(self):
-        return (f"<quantity={self.quantity}, fee={self.fee}, last_buyed={self.last_buyed}>")
+        return (f"<q={self.quantity},fe={self.fee},lB={self.last_buyed}>")
 
 
 class DataDB:
@@ -159,6 +159,7 @@ class DataDB:
 
 def asan_file(id_code_map : dict[int, int]):
     """Load Asan data from Excel file and translate it"""
+    logger.debug("id_code_map= " + " | ".join(f"{k}: {v}" for k, v in id_code_map.items()))
     try:
         asan_path = next(ASAN_FOLDER.glob("*.xlsx"))
         df_asan = pandas.read_excel(asan_path)
@@ -167,14 +168,11 @@ def asan_file(id_code_map : dict[int, int]):
         return {}
 
     asan_list = {}
-    report =[]
     for _, row in df_asan.iterrows():
-        code = str(row["کد کالا"])
+        code = row["کد کالا"]
         id = id_code_map.get(code)
         if id:
             asan_list[id] = Asan(row["مقداراصلی"], row["فی فروش  1"], row["آخرین خرید"])
-        report.append(f"{code} : {id}")
-    logger.debug("id:code dict= " + " | ".join(report))
     return asan_list
 
 
@@ -217,19 +215,20 @@ class DataList :
                 # trying to acces db 
                 self.__list_data = self.__db.load_all()
                 logger.info(f"list_data exported from db='{DB_PATH}'")
+                logger.important("continue")
             else :
                 # filteering table to Only select "id_product", "name", "price"   from "active" or "mojodi_asan" rows:
                 # hint: ~df["active"].isna()  &  df["active"] == 1   are for creating data just one per rows of product (product have some rows)
                 filtered = df.loc[((df["active"] == 1) & df_availables) | (df_mojodi_asan & df["active"].notna()) , ["id_product", "name", "price", "active"]]
                 self.__list_data = [Data(row.id_product, row.name, row.price , row.active, product_quantitys.get(row.id_product), mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
-                logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
                 self.__db.save_all(self.__list_data)
-                logger.important("New __list_data:")  
-                for d in self.__list_data:
-                    logger.important(f"ID='{d.id}'={d.price} '_' {d.quantity} '_' {d.asa}")
-                logger.important("----------------------------------------------------------")  
+                logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
+                logger.important("new start")
             self.len = len(self.__list_data)
-            logger.debug(f"list_data=(len= {self.len}) {self.__list_data}") 
+            entries = " | ".join(f"ID='{d.id}'={d.price} ; {d.quantity} ; {d.asa}" for d in self.__list_data)
+            report_list = f"__list_data = (len={self.len}) {entries}"
+            logger.important(report_list)
+            logger.debug(report_list) 
         except StopIteration:
             e = "No xlsx files found in the 'input xlsx' folder"
             logger.error(e+" → sys.exit(1) called")
