@@ -3,10 +3,7 @@ from scraping import scrap , Site
 from constants import RESULTS
 from import_logging import get_logger
 import pandas 
-import shutil
-import os
 from  stat import S_IWRITE
-from openpyxl import load_workbook
 from time import sleep
 import random  
 import UI
@@ -187,12 +184,10 @@ class DataList :
         self.__db = db
         try:
             xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))
-            # Copy xlsx file to output folder
-            if OUTPUT_FOLDER.exists():
-                shutil.rmtree(OUTPUT_FOLDER , onerror=lambda func, path, _: (os.chmod(path, S_IWRITE), func(path)))
-            OUTPUT_FOLDER.mkdir(exist_ok=True)
+            # xlsx file to output folder
+            if not OUTPUT_FOLDER.exists():
+                OUTPUT_FOLDER.mkdir(exist_ok=True)
             self.output_path = OUTPUT_FOLDER / xlsx_file_path.name
-            shutil.copy(xlsx_file_path, self.output_path)
             # reading xlsx file
             df = pandas.read_excel(xlsx_file_path)
             
@@ -209,8 +204,9 @@ class DataList :
             mojodi_asan = asan_file(refrence_id_series.to_dict())
             df_mojodi_asan = df["id_product"].isin(mojodi_asan.keys())
             
-            # saving self.output_df to "ram" for using in saveData :
-            self.output_df = df[(df_active & df_availables) | df_mojodi_asan]
+            # save filtered rows to the copied output xlsx (so saveData will read/edit the file)
+            filtered_output_df = df[(df_active & df_availables) | df_mojodi_asan]
+            filtered_output_df.to_excel(self.output_path, index=False)
             if re_do and Path(DB_PATH).exists():
                 # trying to acces db 
                 self.__list_data = self.__db.load_all()
@@ -289,7 +285,7 @@ class DataList :
     def saveData(self) :
         """Save all of changes maded untill now from memory to xlsx file"""
         try:
-            df = self.output_df
+            df = pandas.read_excel(self.output_path)
             # filter unchangeds & include changes :
             new_rows = []
             data_map = {d.id: d for d in self.__list_data}
@@ -330,14 +326,9 @@ class DataList :
                     new_rows.append(row_dict)
                 else:
                     logger.debug(f"id='{curr_id}' deleted from xlsx becuase: not any change accepted")
-            # Save (without extra changings (header style)) :
-            wb = load_workbook(self.output_path)
-            ws = wb.active
-            ws.delete_rows(2, ws.max_row)  # keep header, remove all rows
-            for row_idx, row in enumerate(new_rows, start=2):
-                for col_idx, col_name in enumerate(df.columns, start=1):
-                    ws.cell(row=row_idx, column=col_idx, value=row.get(col_name))
-            wb.save(self.output_path)
+            # Save 
+            new_df = pandas.DataFrame(new_rows, columns=df.columns)
+            new_df.to_excel(self.output_path, index=False)
             logger.info(f"Successfully new xlsx saved to {self.output_path}")
         except Exception as e:
             logger.exception("Error during saving data to xlsx: ")
