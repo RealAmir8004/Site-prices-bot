@@ -184,42 +184,19 @@ class DataList :
         self.__db = db
         try:
             xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))
-            # xlsx file to output folder
             if not OUTPUT_FOLDER.exists():
                 OUTPUT_FOLDER.mkdir(exist_ok=True)
             self.output_path = OUTPUT_FOLDER / xlsx_file_path.name
-            # reading xlsx file
-            df = pandas.read_excel(xlsx_file_path)
             
-            active_products = df.groupby("id_product")["active"].apply(lambda a: (a == 1).any())
-            active_products = active_products[active_products].index
-            df_active = df["id_product"].isin(active_products)
-
-            quantity_default_rows = df[df["default_on"] == 1]
-            product_quantitys = quantity_default_rows.set_index("id_product")["quantity"]
-            availables_products = product_quantitys[product_quantitys > 0].index         
-            df_availables =df["id_product"].isin(availables_products)
-
-            refrence_id_series = df[df["active"] == 1].set_index("reference")["id_product"]
-            mojodi_asan = asan_file(refrence_id_series.to_dict())
-            df_mojodi_asan = df["id_product"].isin(mojodi_asan.keys())
-            
-            # save filtered rows to the copied output xlsx (so saveData will read/edit the file)
-            filtered_output_df = df[(df_active & df_availables) | df_mojodi_asan]
-            filtered_output_df.to_excel(self.output_path, index=False)
             if re_do and Path(DB_PATH).exists():
-                # trying to acces db 
                 self.__list_data = self.__db.load_all()
                 logger.info(f"list_data exported from db='{DB_PATH}'")
                 logger.important("continue")
-            else :
-                # filteering table to Only select "id_product", "name", "price"   from "active" or "mojodi_asan" rows:
-                # hint: ~df["active"].isna()  &  df["active"] == 1   are for creating data just one per rows of product (product have some rows)
-                filtered = df.loc[((df["active"] == 1) & df_availables) | (df_mojodi_asan & df["active"].notna()) , ["id_product", "name", "price", "active"]]
-                self.__list_data = [Data(row.id_product, row.name, row.price , row.active, product_quantitys.get(row.id_product), mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
-                self.__db.save_all(self.__list_data)
+            else:
+                self.__list_data = self.new_game(xlsx_file_path)
                 logger.info(f"list_data exported from xlsx'={xlsx_file_path}")
                 logger.important("new start")
+            
             self.len = len(self.__list_data)
             entries = " | ".join(f"ID='{d.id}'={d.price} ; {d.quantity} ; {d.asa}" for d in self.__list_data)
             report_list = f"__list_data = (len={self.len}) {entries}"
@@ -232,6 +209,32 @@ class DataList :
         except Exception as e :
             logger.exception(f"error during initing DataList: ")
             raise
+
+    def new_game(self ,xlsx_file_path) :
+        df = pandas.read_excel(xlsx_file_path)
+        active_products = df.groupby("id_product")["active"].apply(lambda a: (a == 1).any())
+        active_products = active_products[active_products].index
+        df_active = df["id_product"].isin(active_products)
+
+        quantity_default_rows = df[df["default_on"] == 1]
+        product_quantitys = quantity_default_rows.set_index("id_product")["quantity"]
+        availables_products = product_quantitys[product_quantitys > 0].index         
+        df_availables =df["id_product"].isin(availables_products)
+
+        refrence_id_series = df[df["active"] == 1].set_index("reference")["id_product"]
+        mojodi_asan = asan_file(refrence_id_series.to_dict())
+        df_mojodi_asan = df["id_product"].isin(mojodi_asan.keys())
+        
+        # save filtered rows to the copied output xlsx (so saveData will read/edit the file)
+        filtered_output_df = df[(df_active & df_availables) | df_mojodi_asan]
+        filtered_output_df.to_excel(self.output_path, index=False)
+        
+        # filteering table to Only select "id_product", "name", "price"   from "active" or "mojodi_asan" rows:
+        # hint: ~df["active"].isna()  &  df["active"] == 1   are for creating data just one per rows of product (product have some rows)
+        filtered = df.loc[((df["active"] == 1) & df_availables) | (df_mojodi_asan & df["active"].notna()) , ["id_product", "name", "price", "active"]]
+        list_data = [Data(row.id_product, row.name, row.price , row.active, product_quantitys.get(row.id_product), mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
+        self.__db.save_all(self.__list_data)
+        return list_data
 
     def current(self)-> Data :
         return self.__list_data[self.__index]
