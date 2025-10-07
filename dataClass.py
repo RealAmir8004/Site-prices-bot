@@ -12,7 +12,7 @@ import json
 from sortedcontainers import SortedList
 DB_PATH = "data.db"
 ASAN_FOLDER = Path("input asan7")
-ASAN_CODES_DICT = Path("Asan Codes Dictionary") # for new products must update: without bug and duplicates
+ASAN_CODES_DICT = Path("Asan Codes Dictionary")
 INPUT_FOLDER = Path("input xlsx")
 OUTPUT_FOLDER = Path("output xlsx")
 
@@ -92,7 +92,7 @@ class DataDB:
         rows = self.cursor.fetchall()
         result = []
         for id_, name, price, active, quantity, new_quantity, sites_json, chosen_site, torob_url, asa_json in rows:
-            d = Data(id_, name, price, active, quantity)
+            d = Data(id_, name, price, active, quantity, None)
             d.new_quantity = new_quantity
             if asa_json:
                 asa_dict = json.loads(asa_json)
@@ -184,6 +184,11 @@ class DataList :
         self.__db = db
         try:
             xlsx_file_path = next(INPUT_FOLDER.glob("*.xlsx"))
+        except StopIteration:
+            e = "No xlsx files found in the 'input xlsx' folder"
+            logger.error(e)
+            raise FileNotFoundError(e)
+        try:
             if not OUTPUT_FOLDER.exists():
                 OUTPUT_FOLDER.mkdir(exist_ok=True)
             self.output_path = OUTPUT_FOLDER / xlsx_file_path.name
@@ -202,10 +207,6 @@ class DataList :
             report_list = f"__list_data = (len={self.len}) {entries}"
             logger.important(report_list)
             logger.debug(report_list) 
-        except StopIteration:
-            e = "No xlsx files found in the 'input xlsx' folder"
-            logger.error(e+" → sys.exit(1) called")
-            raise FileNotFoundError(e)
         except Exception as e :
             logger.exception(f"error during initing DataList: ")
             raise

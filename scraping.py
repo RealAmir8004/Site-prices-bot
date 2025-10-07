@@ -8,7 +8,7 @@ import UI
 import sys
 from urllib.parse import urlparse
 from sortedcontainers import SortedList
-from constants import RESULTS
+from constants import RESULTS, RESULTS_NUM
 import undetected_chromedriver as uc
 import time
 from googlesearch import search
@@ -63,7 +63,7 @@ def search_google (data_name):
     try:
         query = data_name
         target_pattern = r"https://torob.com/"
-        search_results = search(query , 10)
+        search_results = search(query , RESULTS_NUM)
         for result in search_results:
             if re.match(target_pattern,result):
                 target = result
