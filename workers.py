@@ -1,5 +1,7 @@
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from import_logging import get_logger
 
+logger = get_logger(__name__)
 
 class UpdateWorker(QObject):
     updated = pyqtSignal(int)
@@ -14,6 +16,7 @@ class UpdateWorker(QObject):
 
     @pyqtSlot()
     def run(self):
+        logger.background("UpdateWorker started")
         try:
             items = self.data_list.__list_data
             for d in items:
