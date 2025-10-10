@@ -72,15 +72,14 @@ class MainController:
         self.update_worker.moveToThread(self.update_thread)
         self.update_thread.started.connect(self.update_worker.run)
 
-        def on_updated(product_id):
+        def on_updated(d):
             try:
+                self.db.update(d)
                 curr = self.data_list.current()
+                if curr.id == d.id:
+                    self.ui_window.dataChanged.emit(self.data_list.showData(False))
             except Exception:
-                return
-            # compare product ids so we don't access private indices
-            if curr.id == product_id:
-                # request the UI to refresh current shown data
-                self.ui_window.dataChanged.emit(self.data_list.showData(False))
+                logger.exception("on_updated handler error :")
 
         self.update_worker.updated.connect(on_updated)
         # log errors and finish

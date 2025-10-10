@@ -240,30 +240,6 @@ class DataList :
     def current(self)-> Data :
         return self.__list_data[self.__index]
     
-    def updateAll(self , retry_failures):
-        logger.info("→→→→→→→→→ 'All prudacts Updating'")
-        bar = UI.ProgressDialog()
-        if retry_failures:
-            for i, d in enumerate(self.__list_data):
-                if d.sites is None or d.sites[1].name is None :
-                    d.update()
-                    self.__db.update(d)
-                canceled = bar.progress(i)
-                if canceled:
-                    logger.info(f"Canceled!")
-                    break
-        else:
-            for i, d in enumerate(self.__list_data):
-                if d.sites is None :
-                    d.update()
-                    self.__db.update(d)
-                canceled = bar.progress(i)
-                if canceled:
-                    logger.info(f"Canceled!")
-                    break
-            # sleep(random.uniform(2, 4))
-        logger.info(f"→→→→→→→→→ 'All prudacts Updating' : procces ended : '{i}' of '{self.len}' prudacts update called")
-
     def showData(self , is_next : bool) -> Data:
         """This will go forward in the list and return the next Data object."""
         try:
