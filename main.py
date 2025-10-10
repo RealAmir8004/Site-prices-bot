@@ -3,6 +3,8 @@ import UI
 import sys
 from dataClass import DataList , DataDB
 from import_logging import get_logger
+from workers import UpdateWorker
+from PyQt5.QtCore import QThread
 import msvcrt
 # RESULTS defined in constants.py
 
@@ -20,8 +22,10 @@ class MainController:
             sys.exit(1)
 
         self.ui_window.set_len_list(self.data_list.len)
-        if updateAll :
-            self.data_list.updateAll(retry_failures)
+        self.update_worker = None
+        self.update_thread = None
+        if updateAll:
+            self.start_background_updater(retry_failures)
 
         self.ui_window.nextButton.clicked.connect(self.handle_next_button)
         self.ui_window.backButton.clicked.connect(self.handle_back_button)
@@ -62,6 +66,28 @@ class MainController:
         else :
             logger.info("no changes from previous choice for price or quantity")
 
+    def start_background_updater(self, retry_failures: bool):
+        self.update_thread = QThread()
+        self.update_worker = UpdateWorker(self.data_list, retry_failures)
+        self.update_worker.moveToThread(self.update_thread)
+        self.update_thread.started.connect(self.update_worker.run)
+
+        def on_updated(product_id):
+            try:
+                curr = self.data_list.current()
+            except Exception:
+                return
+            # compare product ids so we don't access private indices
+            if curr.id == product_id:
+                # request the UI to refresh current shown data
+                self.ui_window.dataChanged.emit(self.data_list.showData(False))
+
+        self.update_worker.updated.connect(on_updated)
+        # log errors and finish
+        self.update_worker.error.connect(lambda e: logger.error(f"Background update error: {e}"))
+        self.update_worker.finished.connect(lambda: logger.info("Background updater finished."))
+        self.update_thread.start()
+
     def handle_next_button(self):
         """save changes to memory and show next data"""
         logger.debug("Next clicked!")
@@ -83,7 +109,18 @@ class MainController:
 
     def run(self):
         self.ui_window.show()
-        sys.exit(self.app.exec_())
+        try:
+            sys.exit(self.app.exec_())
+        finally:
+            # ensure worker stops and thread quits on app exit
+            if self.update_worker:
+                try:
+                    self.update_worker.stop()
+                except Exception:
+                    pass
+            if self.update_thread:
+                self.update_thread.quit()
+                self.update_thread.wait()
 
 
 def get_bool_input(prompt: str) -> bool:
