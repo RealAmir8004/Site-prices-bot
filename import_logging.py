@@ -1,5 +1,6 @@
 import logging
 import sys
+import threading
 
 IMPORTANT_LEVEL_NUM = 5
 BACK_THREAD_LEVEL_NUM = 6
@@ -20,8 +21,23 @@ logging.Logger.background = background
 def _important_filter(record):
     return record.levelno == IMPORTANT_LEVEL_NUM
 
+# thread-local flag to mark a thread as a background worker
+_thread_local = threading.local()
+
+def background_thread_logging(flag: bool):
+    setattr(_thread_local, 'is_background', bool(flag))
+
+def is_background_logging() -> bool:
+    return getattr(_thread_local, 'is_background', False)
+
 def _background_filter(record):
-    return record.levelno == BACK_THREAD_LEVEL_NUM
+    if record.levelno == BACK_THREAD_LEVEL_NUM:
+        return True
+    # If thread is flagged as background, accept all records from it
+    return is_background_logging()
+
+def _exclude_background_filter(_record) -> bool:
+    return not is_background_logging()
 
 def get_logger(name):
     logger = logging.getLogger(name)
@@ -33,10 +49,12 @@ def get_logger(name):
     app = logging.FileHandler("app.log", encoding="utf-8")
     app.setLevel(logging.DEBUG)
     app.setFormatter(formatter)
+    app.addFilter(_exclude_background_filter)
 
     terminal = logging.StreamHandler(sys.stdout)
     terminal.setLevel(logging.DEBUG)
     terminal.setFormatter(formatter)
+    terminal.addFilter(_exclude_background_filter)
 
     important = logging.FileHandler("important.log", encoding="utf-8")
     important.setLevel(IMPORTANT_LEVEL_NUM)

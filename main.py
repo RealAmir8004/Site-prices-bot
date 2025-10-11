@@ -79,12 +79,9 @@ class MainController:
                 if curr.id == d.id:
                     self.ui_window.dataChanged.emit(self.data_list.showData(False))
             except Exception:
-                logger.exception("on_updated handler error :")
+                logger.background("exception : on_updated handler error :")
 
         self.update_worker.updated.connect(on_updated)
-        # log errors and finish
-        self.update_worker.error.connect(lambda e: logger.error(f"Background update error: {e}"))
-        self.update_worker.finished.connect(lambda: logger.info("Background updater finished."))
         self.update_thread.start()
 
     def handle_next_button(self):
