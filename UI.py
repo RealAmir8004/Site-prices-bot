@@ -120,20 +120,16 @@ class ProgressDialog(QProgressDialog):
         mainApp = MainApp.instance()
         self.max = mainApp.len_list
         super().__init__("Updating products...", "Cancel", 0, self.max, mainApp)
-        self.setWindowTitle("Please Wait")
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
-        self.setWindowModality(QtCore.Qt.WindowModal)
+        self.setWindowTitle("Background Update")
         self.setMinimumDuration(0)
-        self.setAutoClose(True)
-        self.setAutoReset(True)
-    
+        self.setAutoClose(False)
+        self.setAutoReset(False)
+
     def progress(self ,i) -> bool :
         self.setLabelText(f"Updating item {i + 1} of {self.max}")
         self.setValue(i + 1)
         QApplication.processEvents()
-        if self.wasCanceled():
-            return True
-        return False
+        return self.wasCanceled()
 
 
     @pyqtSlot()

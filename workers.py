@@ -18,7 +18,7 @@ class UpdateWorker(QObject):
     def run(self):
         logger.background("UpdateWorker started ----------")
         try:
-            items = self.data_list.__list_data
+            items = self.data_list._DataList__list_data
             for idx, d in enumerate(items):
                 if self._stopped:
                     break
