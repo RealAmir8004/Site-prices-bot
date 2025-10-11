@@ -6,6 +6,7 @@ logger = get_logger(__name__)
 
 class UpdateWorker(QObject):
     updated = pyqtSignal(object)
+    progress = pyqtSignal(int)
 
     def __init__(self, data_list, retry_failures=False):
         super().__init__()
@@ -18,7 +19,7 @@ class UpdateWorker(QObject):
         logger.background("UpdateWorker started ----------")
         try:
             items = self.data_list.__list_data
-            for d in items:
+            for idx, d in enumerate(items):
                 if self._stopped:
                     break
                 if self.retry_failures:
@@ -34,6 +35,10 @@ class UpdateWorker(QObject):
                     except Exception as e:
                         background_thread_logging(False) #making sure
                         logger.background(f"error : {e}")
+                try:
+                    self.progress.emit(idx)
+                except Exception:
+                    logger.background("failed to emit progress signal")
         except Exception as e:
             logger.background(f"exception : {e}")
         finally:

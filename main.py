@@ -71,6 +71,7 @@ class MainController:
         self.update_worker = UpdateWorker(self.data_list, retry_failures)
         self.update_worker.moveToThread(self.update_thread)
         self.update_thread.started.connect(self.update_worker.run)
+        self.progress_dialog = UI.ProgressDialog()
 
         def on_updated(d):
             try:
@@ -82,6 +83,17 @@ class MainController:
                 logger.background("exception : on_updated handler error :")
 
         self.update_worker.updated.connect(on_updated)
+        def _on_progress(idx: int):
+            try:
+                canceled = self.progress_dialog.progress(idx)
+                if canceled and self.update_worker:
+                    logger.background("Update canceled by user")
+                    self.update_worker.stop()
+            except Exception:
+                logger.background("exception : progress handler error :")
+        self.update_worker.progress.connect(_on_progress)
+        self.progress_dialog.canceled.connect(lambda: self.update_worker.stop())
+        self.update_thread.started.connect(self.progress_dialog.show)
         self.update_thread.start()
 
     def handle_next_button(self):
