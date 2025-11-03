@@ -1,5 +1,5 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QMainWindow , QProgressDialog , QMessageBox , QApplication
+from PyQt5.QtWidgets import QMainWindow , QProgressDialog , QMessageBox , QApplication , QStyle
 from PyQt5.QtCore import pyqtSlot , pyqtSignal , QLocale
 from constants import RESULTS, SITE_NAME
 from import_logging import get_logger
@@ -23,6 +23,12 @@ class MainApp(QMainWindow, Ui_MainWindow):
             raise RuntimeError("Use MainApp.instance() to get the singleton instance.")
         super().__init__()
         self.setupUi(self)
+        self.setGeometry(QStyle.alignedRect(
+            QtCore.Qt.LeftToRight,
+            QtCore.Qt.AlignCenter,
+            self.size(),
+            QApplication.desktop().availableGeometry()
+        ))
         self.__setup_connections()
         self.local = QLocale(QLocale.Persian)
         self.radioButton_6.toggled.connect(self.spinBox.setEnabled)
@@ -120,10 +126,12 @@ class ProgressDialog(QProgressDialog):
         mainApp = MainApp.instance()
         self.max = mainApp.len_list
         super().__init__("Updating products...", "Cancel", 0, self.max, mainApp)
-        self.setWindowTitle("Background Update")
+        self.setWindowTitle("Update All")
         self.setMinimumDuration(0)
         self.setAutoClose(False)
         self.setAutoReset(False)
+        mainWinGeometry = mainApp.geometry()
+        self.move(mainWinGeometry.x()+mainWinGeometry.width()+1, mainWinGeometry.y())
 
     def progress(self ,i) -> bool :
         self.setLabelText(f"Updating item {i + 1} of {self.max}")
