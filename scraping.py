@@ -8,7 +8,7 @@ import UI
 import sys
 from urllib.parse import urlparse
 from sortedcontainers import SortedList
-from constants import RESULTS, RESULTS_NUM
+from constants import RESULTS, RESULTS_NUM, SITE_NAME
 import undetected_chromedriver as uc
 import time
 from googlesearch import search
@@ -135,7 +135,7 @@ class Site :
         self.city = city
         self.last_change = last_change
         self.score_text = score_text
-        if shop_name == "اسپارک دیجی" or price == 0:
+        if shop_name == SITE_NAME or price == 0:
             self.suggested_price = "dont change price"
         else:
             self.suggested_price = self._suggest()

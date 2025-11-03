@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QMainWindow , QProgressDialog , QMessageBox , QApplication
 from PyQt5.QtCore import pyqtSlot , pyqtSignal , QLocale
-from constants import RESULTS
+from constants import RESULTS, SITE_NAME
 from import_logging import get_logger
 import sys
 from UI_mainWindow import Ui_MainWindow
@@ -68,11 +68,11 @@ class MainApp(QMainWindow, Ui_MainWindow):
                 getattr(self, f"label_Tick_{i}").setText('')
             else :
                 getattr(self, f"label_{i}").setText(site.name)
-                if site.name == "اسپارک دیجی":
+                if site.name == SITE_NAME:
                     getattr(self, f"radioButton_{i}").setText(site.suggested_price)
                     dont_radio = i
                     getattr(self, f"label_Tick_{i}").setStyleSheet('')
-                    getattr(self, f"label_Tick_{i}").setText('SP')
+                    getattr(self, f"label_Tick_{i}").setText("Me")
                 else :
                     getattr(self, f"radioButton_{i}").setText(self.local.toString(site.suggested_price))
                     if site.badged:

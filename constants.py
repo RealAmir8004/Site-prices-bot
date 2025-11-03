@@ -3,3 +3,5 @@
 RESULTS = 6
 # the number of google-search-results wich program will search for pattern (pattern = "https://torob.com/")
 RESULTS_NUM = 10
+# current actual Site name in torob
+SITE_NAME = "اسپارک دیجی"

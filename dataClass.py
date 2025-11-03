@@ -1,6 +1,6 @@
 from pathlib import Path
 from scraping import scrap , Site
-from constants import RESULTS
+from constants import RESULTS, SITE_NAME
 from import_logging import get_logger
 import pandas 
 from  stat import S_IWRITE
@@ -42,12 +42,12 @@ class Data :
             sites.add(Site(shop_name=None , price=0, badged=False))
         
         for site in sites[:RESULTS]:
-            if "اسپارک دیجی" == site.name:
+            if SITE_NAME == site.name:
                 self.sites = sites[:RESULTS]
                 break
         else:
             self.sites= SortedList(sites[:RESULTS-1])
-            self.sites.add(Site("اسپارک دیجی", self.price))
+            self.sites.add(Site(SITE_NAME, self.price))
         logger.debug(f"list of boxes (updated) to show in ui (len:{len(self.sites)}): {self.sites}")
 
 
