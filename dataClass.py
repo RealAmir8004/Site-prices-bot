@@ -234,7 +234,7 @@ class DataList :
         # hint: ~df["active"].isna()  &  df["active"] == 1   are for creating data just one per rows of product (product have some rows)
         filtered = df.loc[((df["active"] == 1) & df_availables) | (df_mojodi_asan & df["active"].notna()) , ["id_product", "name", "price", "active"]]
         list_data = [Data(row.id_product, row.name, row.price , row.active, product_quantitys.get(row.id_product), mojodi_asan.get(row.id_product)) for row in filtered.itertuples()]
-        self.__db.save_all(self.__list_data)
+        self.__db.save_all(list_data)
         return list_data
 
     def current(self)-> Data :

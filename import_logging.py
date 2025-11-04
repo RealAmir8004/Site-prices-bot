@@ -41,7 +41,7 @@ def _exclude_background_filter(_record) -> bool:
 
 def get_logger(name):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.NOTSET)
+    logger.setLevel(IMPORTANT_LEVEL_NUM) # dont use logging.NOTSET → it will convert to warning
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     simple_formatter = logging.Formatter('%(asctime)s - %(message)s')

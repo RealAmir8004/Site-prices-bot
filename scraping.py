@@ -197,9 +197,12 @@ def get_all_sites (soup : BeautifulSoup):
     try:
         script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
         if not script_tag or not script_tag.string:
-            logger.error("Could not find the required script tag for product data.")
-            return [], []
-        json_data = json.loads(script_tag.string)  
+            if soup.find("title", string="آیا شما یک ربات هستید؟‌ | ترب"):
+                logger.error("Blocked by cloudflare")
+            else:
+                logger.error("Could not find the required script tag for product data.")
+            return []
+        json_data = json.loads(script_tag.string)
 
         products = json_data["props"]["pageProps"]["baseProduct"]["products_info"]["result"]
     except Exception as e:

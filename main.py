@@ -150,7 +150,7 @@ if __name__ == "__main__":
     use_db = get_bool_input("Continue previous run?")
     updateAll = get_bool_input("Run 'UpdateAll' at first?")
     retry_failures = get_bool_input("Retry failed updates?") if updateAll else False
-    logger.info("Starting MainController")
+    logger.info(f"Starting MainController with {use_db=}, {updateAll=}, {retry_failures=}")
     controller = MainController(use_db , updateAll ,retry_failures)
     controller.run()
 
