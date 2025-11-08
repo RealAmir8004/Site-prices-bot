@@ -10,6 +10,7 @@ import UI
 import sqlite3
 import json
 from sortedcontainers import SortedList
+import ctypes
 DB_PATH = "data.db"
 ASAN_FOLDER = Path("input asan7")
 ASAN_CODES_DICT = Path("Asan Codes Dictionary")
@@ -192,6 +193,7 @@ class DataList :
             if not OUTPUT_FOLDER.exists():
                 OUTPUT_FOLDER.mkdir(exist_ok=True)
             self.output_path = OUTPUT_FOLDER / xlsx_file_path.name
+            self.cache_path = self.output_path.parent / (".cache_" + self.output_path.name)
             
             if re_do and Path(DB_PATH).exists():
                 self.__list_data = self.__db.load_all()
@@ -226,9 +228,11 @@ class DataList :
         mojodi_asan = asan_file(refrence_id_series.to_dict())
         df_mojodi_asan = df["id_product"].isin(mojodi_asan.keys())
         
-        # save filtered rows to the copied output xlsx (so saveData will read/edit the file)
+        # save filtered rows to a hidden cache xlsx next to the output (so saveData will read/edit the cache file)
         filtered_output_df = df[(df_active & df_availables) | df_mojodi_asan]
-        filtered_output_df.to_excel(self.output_path, index=False)
+        filtered_output_df.to_excel(self.cache_path, index=False)
+        FILE_ATTRIBUTE_HIDDEN = 0x02
+        ctypes.windll.kernel32.SetFileAttributesW(str(self.cache_path), FILE_ATTRIBUTE_HIDDEN)
         
         # filteering table to Only select "id_product", "name", "price"   from "active" or "mojodi_asan" rows:
         # hint: ~df["active"].isna()  &  df["active"] == 1   are for creating data just one per rows of product (product have some rows)
@@ -265,7 +269,7 @@ class DataList :
     def saveData(self) :
         """Save all of changes maded untill now from memory to xlsx file"""
         try:
-            df = pandas.read_excel(self.output_path)
+            df = pandas.read_excel(self.cache_path)
             # filter unchangeds & include changes :
             new_rows = []
             data_map = {d.id: d for d in self.__list_data}
