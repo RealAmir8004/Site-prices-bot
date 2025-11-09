@@ -6,7 +6,6 @@ import pandas
 from  stat import S_IWRITE
 from time import sleep
 import random  
-import UI
 import sqlite3
 import json
 from sortedcontainers import SortedList
