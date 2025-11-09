@@ -1,6 +1,9 @@
 import logging
 import sys
 import threading
+from pathlib import Path
+
+SAVE_LOC = Path("storage")
 
 IMPORTANT_LEVEL_NUM = 5
 BACK_THREAD_LEVEL_NUM = 6
@@ -46,7 +49,9 @@ def get_logger(name):
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     simple_formatter = logging.Formatter('%(asctime)s - %(message)s')
 
-    app = logging.FileHandler("app.log", encoding="utf-8")
+    SAVE_LOC.mkdir(parents=True, exist_ok=True)
+
+    app = logging.FileHandler(str(SAVE_LOC / "app.log"), encoding="utf-8")
     app.setLevel(logging.DEBUG)
     app.setFormatter(formatter)
     app.addFilter(_exclude_background_filter)
@@ -56,12 +61,12 @@ def get_logger(name):
     terminal.setFormatter(formatter)
     terminal.addFilter(_exclude_background_filter)
 
-    important = logging.FileHandler("important.log", encoding="utf-8")
+    important = logging.FileHandler(str(SAVE_LOC / "important.log"), encoding="utf-8")
     important.setLevel(IMPORTANT_LEVEL_NUM)
     important.setFormatter(simple_formatter)
     important.addFilter(_important_filter)
 
-    background = logging.FileHandler("background_updating.log", encoding="utf-8")
+    background = logging.FileHandler(str(SAVE_LOC / "background_updating.log"), encoding="utf-8")
     background.setLevel(BACK_THREAD_LEVEL_NUM)
     background.setFormatter(simple_formatter)
     background.addFilter(_background_filter)

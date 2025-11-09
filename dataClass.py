@@ -11,7 +11,7 @@ import sqlite3
 import json
 from sortedcontainers import SortedList
 import ctypes
-DB_PATH = "data.db"
+DB_PATH = Path("storage/data.db")
 ASAN_FOLDER = Path("input asan7")
 ASAN_CODES_DICT = Path("Asan Codes Dictionary")
 INPUT_FOLDER = Path("input xlsx")
@@ -64,6 +64,7 @@ class Asan:
 
 class DataDB:
     def __init__(self, db_path=DB_PATH):
+        db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(str(db_path))
         self.cursor = self.conn.cursor()
         self._create_table()
