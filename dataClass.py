@@ -37,9 +37,15 @@ class Data :
     def update(self):
         "update the product best sites price from trob and return (ready to use in ui )queue of it "
         logger.info(f"Scraping for product (id='{self.id}')...")
-        sites , self.torob_url = scrap(self.name , self.torob_url) 
-        while len(sites) < RESULTS:
-            sites.add(Site(shop_name=None , price=0, badged=False))
+        # sites , self.torob_url = scrap(self.name , self.torob_url) 
+        # while len(sites) < RESULTS:
+        #     sites.add(Site(shop_name=None , price=0, badged=False))
+        
+        # tst:
+        sites= SortedList()
+        for i in range(RESULTS):
+            sites.add(Site(shop_name=f"Shop {i}", price=random.uniform(0.93 *self.price, 1.1 *self.price), badged=random.random() < 0.3))
+            sleep(0.1)
         
         for site in sites[:RESULTS]:
             if SITE_NAME == site.name:
