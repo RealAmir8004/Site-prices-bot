@@ -6,6 +6,7 @@ from import_logging import get_logger
 from workers import UpdateWorker
 from PyQt5.QtCore import QThread
 import msvcrt
+import time
 # RESULTS defined in constants.py
 
 logger = get_logger(__name__)
@@ -147,9 +148,17 @@ def get_bool_input(prompt: str) -> bool:
 
 
 if __name__ == "__main__":
-    use_db = get_bool_input("Continue previous run?")
-    updateAll = get_bool_input("Run 'UpdateAll' at first?")
-    retry_failures = get_bool_input("Retry failed updates?") if updateAll else False
+    # use_db = get_bool_input("Continue previous run?")
+    # updateAll = get_bool_input("Run 'UpdateAll' at first?")
+    # retry_failures = get_bool_input("Retry failed updates?") if updateAll else False
+    print("Continue previous run? (1 = Yes, 0 = No): 0")
+    print("Run 'UpdateAll' at first? (1 = Yes, 0 = No): 1")
+    time.sleep(1)
+    print("...")
+    time.sleep(1)
+    use_db = False
+    updateAll = True
+    retry_failures = False
     logger.info(f"Starting MainController with {use_db=}, {updateAll=}, {retry_failures=}")
     controller = MainController(use_db , updateAll ,retry_failures)
     controller.run()
