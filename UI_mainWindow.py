@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'version7-4.ui'
+# Form implementation generated from reading ui file 'mainWindow_designer.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -58,12 +58,12 @@ class Ui_MainWindow(object):
         self.checkBox_Active.setObjectName("checkBox_Active")
         self.horizontalLayout.addWidget(self.checkBox_Active)
         self.label_productCount = QtWidgets.QLabel(self.centralwidget)
-        self.label_productCount.setMaximumSize(QtCore.QSize(100, 16777215))
+        self.label_productCount.setMaximumSize(QtCore.QSize(150, 16777215))
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
         self.label_productCount.setFont(font)
-        self.label_productCount.setText("1/100")
+        self.label_productCount.setText("100/100 → id = 100")
         self.label_productCount.setObjectName("label_productCount")
         self.horizontalLayout.addWidget(self.label_productCount)
         self.verticalLayout.addLayout(self.horizontalLayout)
